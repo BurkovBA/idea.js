@@ -64,24 +64,27 @@ var Idea = {};
     Idea.Conf = {
         canvas_width: 4096,
         canvas_height: 4096,
-        default_viewport_width: 1024,
-        default_viewport_height: 1024,
+        default_viewport_width: 800,
+        default_viewport_height: 800,
         framerate: 25
     };
 })();
 
 (function(){
     Idea.Util = {
+        SVGNS: "http://www.w3.org/2000/svg",
+        XMLNS: "http://www.w3.org/1999/xhtml",
+        XLINKNS: 'http://www.w3.org/1999/xlink',
         MOUSE_EVENTS: ["click", "dblclick", "mousedown", "mousemove", "mouseout", "mouseover", "mouseup"],
         KEYBOARD_EVENTS: ["keydown", "keypress", "keyup"],
         INTREGEX: /^\d+$/,
         isHexColor: function(color){return /^#[0-9A-F]{6}$/i.test(color)},
         extend: function(Child, Parent){
-           var F = function() { }
-           F.prototype = Parent.prototype
-           Child.prototype = new F()
-           Child.prototype.constructor = Child
-           Child.superclass = Parent.prototype
+           var F = function(){ };
+           F.prototype = Parent.prototype;
+           Child.prototype = new F();
+           Child.prototype.constructor = Child;
+           Child.superclass = Parent.prototype;
         },
         /*
          * @method
@@ -95,6 +98,26 @@ var Idea = {};
             for (var key in attrs){
                 constructor.prototype[key] = attrs[key];
             }
+        },
+        /*
+         * @method
+         * @memberof Idea.Util
+         * @param parent  svg element that is the parent of newly created one.
+         * @param tag     type of newly created svg element (e.g. 'rect' or 'g').
+         * @param attrs   dict with attributes of newly created element.
+         *
+         */
+
+        createSVGElement: function(parent, tag, attrs){
+            var elem = document.createElementNS(this.SVGNS, tag);
+            for (var key in attrs){
+                if (key == "xlink:href") {
+                    elem.setAttributeNS(XLINKNS, 'href', attrs[key]);
+                }
+                else {elem.setAttribute(key, attrs[key]);}
+            }
+            parent.appendChild(elem);
+            return elem;
         }
     };
 })();
@@ -127,55 +150,80 @@ var Idea = {};
      */
 
     Idea.Canvas = function(width, height){
-        if (canvas === undefined) {
-            this._canvas = document.createElement('svg');
-            this._canvas.setAttribute("version", "1.1")
-            this._canvas.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-            this._canvas.setAttribute("width", Idea.Conf.canvas_width);
-            this._canvas.setAttribute("height", Idea.Conf.canvas_height);
+        //create a div container for our canvas
+        this._div = document.createElement('div');
+        this._div.style.border = "1px solid rgb(200,200,200)";
+        this._div.style.display = "inline-block";
+        document.body.appendChild(this._div);
 
-            //check if width/height is set and define the size of viewport
-            var viewbox;
-            if (!((width === undefined) || (height === undefined))) {
-                viewbox = "" + Idea.Conf.canvas_width/2 + " "
-                 + Idea.Conf.canvas/2 - height + " " + width + " " + height;
-                alert(viewbox);
-            }
-            else {
-                viewbox =  "" + Idea.Conf.canvas_width/2 + " "
-                 + Idea.Conf.canvas/2 - Idea.Conf.default_viewport_width + " "
-                 + Idea.Conf.default_viewport_width + " " 
-                 + Idea.Conf.default_viewport_height;
-                alert(viewbox)
-            }
-            this._canvas.setAttribute("viewBox", viewbox)
+        //create the canvas itself, set its attributes and insert it into div    
+        this._canvas = document.createElementNS(Idea.Util.SVGNS, 'svg');
 
-            document.body.appendChild(this._canvas);
+        //this._canvas.setAttribute("version", "1.1")
+        //this._canvas.setAttribute("xmlns", Idea.Util.SVGNS);
+        this._canvas.setAttribute("width", Idea.Conf.default_viewport_width);
+        this._canvas.setAttribute("height", Idea.Conf.default_viewport_height);
 
-            this.slides = [new Idea.Slide(this)]; //array of slides in order from 1st to last
-            this._slide = this.slides[0];
-            this._mode = "view"; // "view" or "edit" mode
-
-            // http://en.wikipedia.org/wiki/HTML_attribute - list of events
-            this._canvas.onclick = this.click;
-            this._canvas.ondblclick = this.dblclick;
-            this._canvas.onmousedown = this.mousedown;
-            this._canvas.onmousemove = this.mousemove;
-            this._canvas.onmouseout = this.mouseout;
-            this._canvas.onmouseover = this.mouseover;
-            this._canvas.onmouseup = this.mouseup;
-
-            this._canvas.onkeydown = this.keydown;
-            this._canvas.onkeypress = this.keypress;
-            this._canvas.onkeyup = this.keyup;
-
-            //alert("Creating canvas");
-            //var ctx=this._canvas.getContext("2d");
-            //ctx.beginPath();
-            //ctx.moveTo(0,0);
-            //ctx.lineTo(300,150);
-            //ctx.stroke();
+        //check if width/height is set and define the size of viewport
+        var viewbox;
+        if (!((width === undefined) || (height === undefined))) {
+            var x = Idea.Conf.canvas_width/2;
+            var y = Idea.Conf.canvas/2 - height;
+            var width = width;
+            var height = height;
+            viewbox =  "" + x + " " + y + " " + width + " " + height;
         }
+        else {
+            var x = Idea.Conf.canvas_width/2;
+            var y = Idea.Conf.canvas_height/2 - Idea.Conf.default_viewport_width;
+            var width = Idea.Conf.default_viewport_width;
+            var height = Idea.Conf.default_viewport_height;
+            viewbox =  "" + x + " " + y + " " + width + " " + height;
+        }
+        alert(viewbox);
+        //this._canvas.setAttributeNS(Idea.UTIL.SVGNS, "viewBox", viewbox);
+
+        this._div.appendChild(this._canvas);
+
+        this.rect = Idea.Util.createSVGElement(this._canvas, 'rect', {
+            "x": 10,
+            "y": 10,
+            "width": 50,
+            "height": 50,
+        });
+
+        //this.rect = document.createElement('rect');
+        //this.rect.setAttribute("x", 10);
+        //this.rect.setAttribute("y", 10);
+        //this.rect.setAttribute("width", 50);
+        //this.rect.setAttribute("height", 30);
+        this.rect.style.stroke = "black";
+        this.rect.style.fill = "none";
+        //this._canvas.appendChild(this.rect);
+
+        this.slides = [new Idea.Slide(this)]; //array of slides in order from 1st to last
+        this._slide = this.slides[0];
+        this._mode = "view"; // "view" or "edit" mode
+
+        // http://en.wikipedia.org/wiki/HTML_attribute - list of events
+        this._canvas.onclick = this.click;
+        this._canvas.ondblclick = this.dblclick;
+        this._canvas.onmousedown = this.mousedown;
+        this._canvas.onmousemove = this.mousemove;
+        this._canvas.onmouseout = this.mouseout;
+        this._canvas.onmouseover = this.mouseover;
+        this._canvas.onmouseup = this.mouseup;
+
+        this._canvas.onkeydown = this.keydown;
+        this._canvas.onkeypress = this.keypress;
+        this._canvas.onkeyup = this.keyup;
+
+        //alert("Creating canvas");
+        //var ctx=this._canvas.getContext("2d");
+        //ctx.beginPath();
+        //ctx.moveTo(0,0);
+        //ctx.lineTo(300,150);
+        //ctx.stroke();
     };
 
     Idea.Canvas.prototype = {

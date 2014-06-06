@@ -26,29 +26,56 @@
      */
 
     Idea.Canvas = function(width, height){
-        this._canvas = document.createElement('svg');
-        this._canvas.setAttribute("version", "1.1")
-        this._canvas.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-        this._canvas.setAttribute("width", Idea.Conf.canvas_width);
-        this._canvas.setAttribute("height", Idea.Conf.canvas_height);
+        //create a div container for our canvas
+        this._div = document.createElement('div');
+        this._div.style.border = "1px solid rgb(200,200,200)";
+        this._div.style.display = "inline-block";
+        document.body.appendChild(this._div);
+
+        //create the canvas itself, set its attributes and insert it into div    
+        this._canvas = document.createElementNS(Idea.Util.SVGNS, 'svg');
+
+        //this._canvas.setAttribute("version", "1.1")
+        //this._canvas.setAttribute("xmlns", Idea.Util.SVGNS);
+        this._canvas.setAttribute("width", Idea.Conf.default_viewport_width);
+        this._canvas.setAttribute("height", Idea.Conf.default_viewport_height);
 
         //check if width/height is set and define the size of viewport
         var viewbox;
         if (!((width === undefined) || (height === undefined))) {
-            viewbox = "" + Idea.Conf.canvas_width/2 + " "
-             + Idea.Conf.canvas/2 - height + " " + width + " " + height;
-            alert(viewbox);
+            var x = Idea.Conf.canvas_width/2;
+            var y = Idea.Conf.canvas/2 - height;
+            var width = width;
+            var height = height;
+            viewbox =  "" + x + " " + y + " " + width + " " + height;
         }
         else {
-            viewbox =  "" + Idea.Conf.canvas_width/2 + " "
-             + Idea.Conf.canvas/2 - Idea.Conf.default_viewport_width + " "
-             + Idea.Conf.default_viewport_width + " " 
-             + Idea.Conf.default_viewport_height;
-            alert(viewbox)
+            var x = Idea.Conf.canvas_width/2;
+            var y = Idea.Conf.canvas_height/2 - Idea.Conf.default_viewport_width;
+            var width = Idea.Conf.default_viewport_width;
+            var height = Idea.Conf.default_viewport_height;
+            viewbox =  "" + x + " " + y + " " + width + " " + height;
         }
-        this._canvas.setAttribute("viewBox", viewbox)
+        alert(viewbox);
+        //this._canvas.setAttributeNS(Idea.UTIL.SVGNS, "viewBox", viewbox);
 
-        document.body.appendChild(this._canvas);
+        this._div.appendChild(this._canvas);
+
+        this.rect = Idea.Util.createSVGElement(this._canvas, 'rect', {
+            "x": 10,
+            "y": 10,
+            "width": 50,
+            "height": 50,
+        });
+
+        //this.rect = document.createElement('rect');
+        //this.rect.setAttribute("x", 10);
+        //this.rect.setAttribute("y", 10);
+        //this.rect.setAttribute("width", 50);
+        //this.rect.setAttribute("height", 30);
+        this.rect.style.stroke = "black";
+        this.rect.style.fill = "none";
+        //this._canvas.appendChild(this.rect);
 
         this.slides = [new Idea.Slide(this)]; //array of slides in order from 1st to last
         this._slide = this.slides[0];

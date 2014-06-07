@@ -15,6 +15,8 @@
            Child.superclass = Parent.prototype;
         },
         /*
+         * Dynamically adds attributes to constructor's prototype.
+         *
          * @method
          * @memberof Idea.Util
          * @param constructor   constructor, its prototype will get new attrs.
@@ -28,15 +30,18 @@
             }
         },
         /*
+         * Creates, appends to father tag and returns SVG primitive 
+         * (e.g. rect, group etc.).
+         *
          * @method
          * @memberof Idea.Util
-         * @param parent  svg element that is the parent of newly created one.
+         * @param father  svg element that is the parent of newly created one.
          * @param tag     type of newly created svg element (e.g. 'rect' or 'g').
          * @param attrs   dict with attributes of newly created element.
          *
          */
 
-        createSVGElement: function(parent, tag, attrs){
+        createSVGElement: function(father, tag, attrs){
             var elem = document.createElementNS(this.SVGNS, tag);
             for (var key in attrs){
                 if (key == "xlink:href") {
@@ -44,7 +49,7 @@
                 }
                 else {elem.setAttribute(key, attrs[key]);}
             }
-            parent.appendChild(elem);
+            father.appendChild(elem);
             return elem;
         }
     };

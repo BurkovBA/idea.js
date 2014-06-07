@@ -87,6 +87,8 @@ var Idea = {};
            Child.superclass = Parent.prototype;
         },
         /*
+         * Dynamically adds attributes to constructor's prototype.
+         *
          * @method
          * @memberof Idea.Util
          * @param constructor   constructor, its prototype will get new attrs.
@@ -100,15 +102,18 @@ var Idea = {};
             }
         },
         /*
+         * Creates, appends to father tag and returns SVG primitive 
+         * (e.g. rect, group etc.).
+         *
          * @method
          * @memberof Idea.Util
-         * @param parent  svg element that is the parent of newly created one.
+         * @param father  svg element that is the parent of newly created one.
          * @param tag     type of newly created svg element (e.g. 'rect' or 'g').
          * @param attrs   dict with attributes of newly created element.
          *
          */
 
-        createSVGElement: function(parent, tag, attrs){
+        createSVGElement: function(father, tag, attrs){
             var elem = document.createElementNS(this.SVGNS, tag);
             for (var key in attrs){
                 if (key == "xlink:href") {
@@ -116,7 +121,7 @@ var Idea = {};
                 }
                 else {elem.setAttribute(key, attrs[key]);}
             }
-            parent.appendChild(elem);
+            father.appendChild(elem);
             return elem;
         }
     };
@@ -181,7 +186,7 @@ var Idea = {};
             viewbox =  "" + x + " " + y + " " + width + " " + height;
         }
         alert(viewbox);
-        //this._canvas.setAttributeNS(Idea.UTIL.SVGNS, "viewBox", viewbox);
+        this._canvas.setAttributeNS(Idea.Util.SVGNS, "viewBox", viewbox);
 
         this._div.appendChild(this._canvas);
 
@@ -191,39 +196,30 @@ var Idea = {};
             "width": 50,
             "height": 50,
         });
-
-        //this.rect = document.createElement('rect');
-        //this.rect.setAttribute("x", 10);
-        //this.rect.setAttribute("y", 10);
-        //this.rect.setAttribute("width", 50);
-        //this.rect.setAttribute("height", 30);
         this.rect.style.stroke = "black";
         this.rect.style.fill = "none";
-        //this._canvas.appendChild(this.rect);
 
         this.slides = [new Idea.Slide(this)]; //array of slides in order from 1st to last
         this._slide = this.slides[0];
         this._mode = "view"; // "view" or "edit" mode
 
         // http://en.wikipedia.org/wiki/HTML_attribute - list of events
-        this._canvas.onclick = this.click;
-        this._canvas.ondblclick = this.dblclick;
-        this._canvas.onmousedown = this.mousedown;
-        this._canvas.onmousemove = this.mousemove;
-        this._canvas.onmouseout = this.mouseout;
-        this._canvas.onmouseover = this.mouseover;
-        this._canvas.onmouseup = this.mouseup;
 
-        this._canvas.onkeydown = this.keydown;
-        this._canvas.onkeypress = this.keypress;
-        this._canvas.onkeyup = this.keyup;
+        // Note: we call bind() on event handlers to have "this" refer
+        // to our Idea.Canvas object, not to this._canvas, as it would've
+        // been in event handler context.
+        this._canvas.onclick = this.click.bind(this);
+        this._canvas.ondblclick = this.dblclick.bind(this);
+        this._canvas.onmousedown = this.mousedown.bind(this);
+        this._canvas.onmousemove = this.mousemove.bind(this);
+        this._canvas.onmouseout = this.mouseout.bind(this);
+        this._canvas.onmouseover = this.mouseover.bind(this);
+        this._canvas.onmouseup = this.mouseup.bind(this);
 
-        //alert("Creating canvas");
-        //var ctx=this._canvas.getContext("2d");
-        //ctx.beginPath();
-        //ctx.moveTo(0,0);
-        //ctx.lineTo(300,150);
-        //ctx.stroke();
+        this._canvas.onkeydown = this.keydown.bind(this);
+        this._canvas.onkeypress = this.keypress.bind(this);
+        this._canvas.onkeyup = this.keyup.bind(this);
+
     };
 
     Idea.Canvas.prototype = {
@@ -252,11 +248,13 @@ var Idea = {};
             if (height === undefined){return this._canvas.height;}
             else {this._canvas.height = height;}
         },
+
+        //events-related code
         _propagateEventToWidgets: function(evt){
-            for (i=this.slide().widgets.length; i >= 0; i++) {
+            for (i=this.slide().widgets.length-1; i >= 0; i++) {
                 var widget = this.slide().widgets[i];
                 if (widget.accepts_event(evt)){
-                   break;
+                    break;
                 }
             }
         },
@@ -267,35 +265,45 @@ var Idea = {};
                 y: evt.y - rect.top
             };
         },
-        click: function(){
+        click: function(event){
+            event = event || window.event // "|| window.event" for  cross-IEness
             this._propagateEventToWidgets(event);
         },
-        dblclick: function(){
+        dblclick: function(event){
+            event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
-        mousedown: function(){
+        mousedown: function(event){
+            event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
-        mousemove: function(){
+        mousemove: function(event){
+            event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
-        mouseout: function(){
+        mouseout: function(event){
+            event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
-        mouseover: function(){
+        mouseover: function(event){
+            event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
-        mouseup: function(){
+        mouseup: function(event){
+            event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
 
-        keydown: function() {
+        keydown: function(event) {
+            event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
-        keypress: function(){
+        keypress: function(event){
+            event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
-        keyup: function(){
+        keyup: function(event){
+            event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
     };
@@ -353,6 +361,9 @@ var Idea = {};
     /*
      * Straight arrow
      *
+     * @param father      Util.Widget, parental to Arrow, or Util.Canvas,
+     *                    if Arrow doesn't have a parent and is drawn right
+                          on the canvas.
      * @param width       width of arrow line, defaults to 1px.
      * @param color       color of arrow, defaults to black.
      * @param base        coordinates of arrow's base, e.g.{x:42, y:42}.
@@ -362,7 +373,7 @@ var Idea = {};
      *                    arrow (if not specified, Triangles will be 
      *                    created and used by default).
      */
-    Idea.Arrow = function(width, color, base, tip, base_widget, tip_widget){
+    Idea.Arrow = function(father, width, color, base, tip, base_widget, tip_widget){
         if (width === undefined) {this._width = 1;}
         else {this._width = width;}
         if (color === undefined) {this._color = color;}
@@ -372,10 +383,28 @@ var Idea = {};
         // stick to widgets.
         this._base = base;
         this._tip = tip;
-        if (base_widget === undefined) {this._base_widget = new Triangle();}
+        if (base_widget === undefined) {this._base_widget = null;}
         else {this._base = base_widget;}
-        if (tip_widget === undefined) {this._tip_widget = new Triangle();}
+        if (tip_widget === undefined) {this._tip_widget = null;}
         else {this._tip = tip_widget;}
+        //draw primitives
+        this.father = father;
+        if (this.father instanceof Idea.Canvas) {
+            this._group = Idea.Util.createSVGElement(this.father._canvas, 'g', {});
+            this._drawing = Idea.Util.createSVGElement(this._group, 'line', {
+                "x1": this._base.x,
+                "y1": this._base.y,
+                "x2": this._tip.x,
+                "y2": this._tip.y
+            });
+            this._drawing.style.stroke = this._color;
+            this._drawing.style['stroke-width'] = this.width;
+        }
+        else {
+            //TODO!!!!
+        }
+
+
     };
 
     Idea.Util.extend(Idea.Arrow, Idea.Widget);

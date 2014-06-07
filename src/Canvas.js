@@ -57,7 +57,7 @@
             viewbox =  "" + x + " " + y + " " + width + " " + height;
         }
         alert(viewbox);
-        //this._canvas.setAttributeNS(Idea.UTIL.SVGNS, "viewBox", viewbox);
+        this._canvas.setAttributeNS(Idea.Util.SVGNS, "viewBox", viewbox);
 
         this._div.appendChild(this._canvas);
 
@@ -82,24 +82,22 @@
         this._mode = "view"; // "view" or "edit" mode
 
         // http://en.wikipedia.org/wiki/HTML_attribute - list of events
-        this._canvas.onclick = this.click;
-        this._canvas.ondblclick = this.dblclick;
-        this._canvas.onmousedown = this.mousedown;
-        this._canvas.onmousemove = this.mousemove;
-        this._canvas.onmouseout = this.mouseout;
-        this._canvas.onmouseover = this.mouseover;
-        this._canvas.onmouseup = this.mouseup;
 
-        this._canvas.onkeydown = this.keydown;
-        this._canvas.onkeypress = this.keypress;
-        this._canvas.onkeyup = this.keyup;
+        // Note: we call bind() on event handlers to have "this" refer
+        // to our Idea.Canvas object, not to this._canvas, as it would've
+        // been in event handler context.
+        this._canvas.onclick = this.click.bind(this);
+        this._canvas.ondblclick = this.dblclick.bind(this);
+        this._canvas.onmousedown = this.mousedown.bind(this);
+        this._canvas.onmousemove = this.mousemove.bind(this);
+        this._canvas.onmouseout = this.mouseout.bind(this);
+        this._canvas.onmouseover = this.mouseover.bind(this);
+        this._canvas.onmouseup = this.mouseup.bind(this);
 
-        //alert("Creating canvas");
-        //var ctx=this._canvas.getContext("2d");
-        //ctx.beginPath();
-        //ctx.moveTo(0,0);
-        //ctx.lineTo(300,150);
-        //ctx.stroke();
+        this._canvas.onkeydown = this.keydown.bind(this);
+        this._canvas.onkeypress = this.keypress.bind(this);
+        this._canvas.onkeyup = this.keyup.bind(this);
+
     };
 
     Idea.Canvas.prototype = {
@@ -128,11 +126,13 @@
             if (height === undefined){return this._canvas.height;}
             else {this._canvas.height = height;}
         },
+
+        //events-related code
         _propagateEventToWidgets: function(evt){
-            for (i=this.slide().widgets.length; i >= 0; i++) {
+            for (i=this.slide().widgets.length-1; i >= 0; i++) {
                 var widget = this.slide().widgets[i];
                 if (widget.accepts_event(evt)){
-                   break;
+                    break;
                 }
             }
         },
@@ -143,35 +143,45 @@
                 y: evt.y - rect.top
             };
         },
-        click: function(){
+        click: function(event){
+            event = event || window.event // "|| window.event" for  cross-IEness
             this._propagateEventToWidgets(event);
         },
-        dblclick: function(){
+        dblclick: function(event){
+            event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
-        mousedown: function(){
+        mousedown: function(event){
+            event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
-        mousemove: function(){
+        mousemove: function(event){
+            event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
-        mouseout: function(){
+        mouseout: function(event){
+            event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
-        mouseover: function(){
+        mouseover: function(event){
+            event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
-        mouseup: function(){
+        mouseup: function(event){
+            event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
 
-        keydown: function() {
+        keydown: function(event) {
+            event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
-        keypress: function(){
+        keypress: function(event){
+            event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
-        keyup: function(){
+        keyup: function(event){
+            event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
     };

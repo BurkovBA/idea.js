@@ -2,6 +2,9 @@
     /*
      * Straight arrow
      *
+     * @param father      Util.Widget, parental to Arrow, or Util.Canvas,
+     *                    if Arrow doesn't have a parent and is drawn right
+                          on the canvas.
      * @param width       width of arrow line, defaults to 1px.
      * @param color       color of arrow, defaults to black.
      * @param base        coordinates of arrow's base, e.g.{x:42, y:42}.
@@ -11,7 +14,7 @@
      *                    arrow (if not specified, Triangles will be 
      *                    created and used by default).
      */
-    Idea.Arrow = function(width, color, base, tip, base_widget, tip_widget){
+    Idea.Arrow = function(father, width, color, base, tip, base_widget, tip_widget){
         if (width === undefined) {this._width = 1;}
         else {this._width = width;}
         if (color === undefined) {this._color = color;}
@@ -21,10 +24,28 @@
         // stick to widgets.
         this._base = base;
         this._tip = tip;
-        if (base_widget === undefined) {this._base_widget = new Triangle();}
+        if (base_widget === undefined) {this._base_widget = null;}
         else {this._base = base_widget;}
-        if (tip_widget === undefined) {this._tip_widget = new Triangle();}
+        if (tip_widget === undefined) {this._tip_widget = null;}
         else {this._tip = tip_widget;}
+        //draw primitives
+        this.father = father;
+        if (this.father instanceof Idea.Canvas) {
+            this._group = Idea.Util.createSVGElement(this.father._canvas, 'g', {});
+            this._drawing = Idea.Util.createSVGElement(this._group, 'line', {
+                "x1": this._base.x,
+                "y1": this._base.y,
+                "x2": this._tip.x,
+                "y2": this._tip.y
+            });
+            this._drawing.style.stroke = this._color;
+            this._drawing.style['stroke-width'] = this.width;
+        }
+        else {
+            //TODO!!!!
+        }
+
+
     };
 
     Idea.Util.extend(Idea.Arrow, Idea.Widget);

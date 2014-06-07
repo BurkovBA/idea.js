@@ -61,21 +61,66 @@
 
         this._div.appendChild(this._canvas);
 
+        //create resize grip
+        this._grip = document.createElement('div');
+        this._grip.style.width = 16;
+        this._grip.style.height = 16;
+        this._grip.style.display = "inline-block";
+        this._grip.style.background = "#AAAAAA";
+        this._grip.style.float = "right";
+        this._div.appendChild(this._grip);
+        //see this for explaination of code below:
+        //http://www.martinrinehart.com/early-sites/mrwebsite_old/examples/cross_browser_mouse_events.html
+        this._grip.onmousedown = function(event){
+            var event = event || window.event;
+            var which = event.which ? event.which :
+                event.button === 1 ? 1 :
+                event.button === 2 ? 3 : 
+                event.button === 4 ? 2 : 1;
+            if (which == 1) {
+                this._grip_pressed = true;
+                this._grip_x = event.x || event.clientX;
+                this._grip_y = event.y || event.clientY;
+            }
+        }.bind(this);
+        this._grip.onmouseup = function(event){
+            var event = event || window.event;
+            var which = event.which ? event.which :
+                event.button === 1 ? 1 :
+                event.button === 2 ? 3 : 
+                event.button === 4 ? 2 : 1;
+            if (which == 1) {this._grip_pressed = false;}
+        }.bind(this);
+        this._grip.onmousemove = function(event){
+            var event = event || window.event;
+            event.x = event.x || event.clientX;
+            event.y = event.y || event.clientY;
+            if (this._grip_pressed == true){
+                this.width(parseInt(this.width()) + event.x - this._grip_x);
+                this.height(parseInt(this.height()) + event.y - this._grip_y);
+                this._grip_x = event.x;
+                this._grip_y = event.y;
+            }
+        }.bind(this);
+        this._grip.onmouseover = function(event){
+            var event = event || window.event;
+            this.style.cursor = "nw-resize";
+        };
+        //create clear
+        this._clear = document.createElement('div');
+        this._grip.style.clear = "both";
+        this._div.appendChild(this._clear);
+
+        //TODO REMOVE THIS IT'S A TEST
         this.rect = Idea.Util.createSVGElement(this._canvas, 'rect', {
             "x": 10,
             "y": 10,
             "width": 50,
             "height": 50,
         });
-
-        //this.rect = document.createElement('rect');
-        //this.rect.setAttribute("x", 10);
-        //this.rect.setAttribute("y", 10);
-        //this.rect.setAttribute("width", 50);
-        //this.rect.setAttribute("height", 30);
         this.rect.style.stroke = "black";
         this.rect.style.fill = "none";
-        //this._canvas.appendChild(this.rect);
+        //TODO REMOVE THIS IT'S A TEST
 
         this.slides = [new Idea.Slide(this)]; //array of slides in order from 1st to last
         this._slide = this.slides[0];
@@ -118,13 +163,13 @@
         },
 
         width: function(width){
-            if (width === undefined){return this._canvas.width;}
-            else {this._canvas.width = width;}
+            if (width === undefined){return this._canvas.getAttribute("width");}
+            else {this._canvas.setAttribute("width", width);}
         },
 
         height: function(height){
-            if (height === undefined){return this._canvas.height;}
-            else {this._canvas.height = height;}
+            if (height === undefined){return this._canvas.getAttribute("height");}
+            else {this._canvas.setAttribute("height", height);}
         },
 
         //events-related code
@@ -144,44 +189,44 @@
             };
         },
         click: function(event){
-            event = event || window.event // "|| window.event" for  cross-IEness
+            var event = event || window.event // "|| window.event" for  cross-IEness
             this._propagateEventToWidgets(event);
         },
         dblclick: function(event){
-            event = event || window.event //cross-IEness
+            var event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
         mousedown: function(event){
-            event = event || window.event //cross-IEness
+            var event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
         mousemove: function(event){
-            event = event || window.event //cross-IEness
+            var event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
         mouseout: function(event){
-            event = event || window.event //cross-IEness
+            var event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
         mouseover: function(event){
-            event = event || window.event //cross-IEness
+            var event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
         mouseup: function(event){
-            event = event || window.event //cross-IEness
+            var event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
 
         keydown: function(event) {
-            event = event || window.event //cross-IEness
+            var event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
         keypress: function(event){
-            event = event || window.event //cross-IEness
+            var event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
         keyup: function(event){
-            event = event || window.event //cross-IEness
+            var event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
     };

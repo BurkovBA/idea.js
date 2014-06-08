@@ -192,13 +192,14 @@ var Idea = {};
 
         //create resize grip
         this._grip = document.createElement('div');
-        this._grip.style.width = 16;
-        this._grip.style.height = 16;
+        this._grip.style.width = 10;
+        this._grip.style.height = 10;
         this._grip.style.display = "inline-block";
         this._grip.style.background = "#AAAAAA";
         this._grip.style.float = "right";
         this._div.appendChild(this._grip);
-        //see this for explaination of code below:
+        //to fight incompatibilitiy of mouse button codes between IE and browsers,
+        //we use tricks with event.which and event.button, for explanation see:
         //http://www.martinrinehart.com/early-sites/mrwebsite_old/examples/cross_browser_mouse_events.html
         this._grip.onmousedown = function(event){
             var event = event || window.event;
@@ -210,32 +211,44 @@ var Idea = {};
                 this._grip_pressed = true;
                 this._grip_x = event.x || event.clientX;
                 this._grip_y = event.y || event.clientY;
-            }
-        }.bind(this);
-        this._grip.onmouseup = function(event){
-            var event = event || window.event;
-            var which = event.which ? event.which :
-                event.button === 1 ? 1 :
-                event.button === 2 ? 3 : 
-                event.button === 4 ? 2 : 1;
-            if (which == 1) {this._grip_pressed = false;}
-        }.bind(this);
-        this._grip.onmousemove = function(event){
-            var event = event || window.event;
-            event.x = event.x || event.clientX;
-            event.y = event.y || event.clientY;
-            if (this._grip_pressed == true){
-                this.width(parseInt(this.width()) + event.x - this._grip_x);
-                this.height(parseInt(this.height()) + event.y - this._grip_y);
-                this._grip_x = event.x;
-                this._grip_y = event.y;
+                //add event listeners to <html> (i.e. document.documentElement)
+                //to respond to mousemove and mouseup if they're outside _grip.
+                //idea taken from here:
+                //http://stackoverflow.com/questions/8960193/how-to-make-html-element-resizable-using-pure-javascript
+                var Up = function(event){
+                    var event = event || window.event;
+                    var which = event.which ? event.which :
+                    event.button === 1 ? 1 :
+                    event.button === 2 ? 3 : 
+                    event.button === 4 ? 2 : 1;
+                    if (which == 1) {
+                        this._grip_pressed = false;
+                        document.documentElement.removeEventListener('mousemove', Move, false);
+                        document.documentElement.removeEventListener('mouseup', Up, false);
+                    }
+                }.bind(this);
+                
+                var Move = function(event) {
+                    var event = event || window.event;
+                    event.x = event.x || event.clientX;
+                    event.y = event.y || event.clientY;
+                    if (this._grip_pressed == true){
+                        this.width(parseInt(this.width()) + event.x - this._grip_x);
+                        this.height(parseInt(this.height()) + event.y - this._grip_y);
+                        this._grip_x = event.x;
+                        this._grip_y = event.y;
+                    }
+                }.bind(this);
+
+                document.documentElement.addEventListener('mouseup', Up, false);
+                document.documentElement.addEventListener('mousemove', Move, false);
             }
         }.bind(this);
         this._grip.onmouseover = function(event){
             var event = event || window.event;
             this.style.cursor = "nw-resize";
         };
-        //create clear
+        //create clear element to clear floats
         this._clear = document.createElement('div');
         this._grip.style.clear = "both";
         this._div.appendChild(this._clear);

@@ -1,7 +1,33 @@
 (function(){
+
+    var widthGetterSetter = Idea.Util.uintGetterSetter("width");
+    var colorGetterSetter = Idea.Util.colorGetterSetter("color");
+    var baseGetterSetter = function(base){
+        if (base === undefined) {return this._base}
+        else {
+            if (base.hasOwnProperty("x") && Idea.Util.UINTREGEX.test(base.x) && base.hasOwnProperty("y") && Idea.Util.UINTREGEX.test(base.y)){
+                this._base = base;
+            }//TODO TEST CANVAS SIZE
+        }
+    };
+    var tipGetterSetter = function(tip){
+        if (tip === undefined) {return this._tip}
+        else {
+            if (tip.hasOwnProperty("x") && Idea.Util.UINTREGEX.test(tip.x) && tip.hasOwnProperty("y") && Idea.Util.UINTREGEX.test(tip.y)){
+                this._tip = tip;
+            }//TODO TEST CANVAS SIZE
+           
+        }
+    };
+    var baseWidgetGetterSetter = Idea.Util.widgetGetterSetter("base_widget");
+    var tipWidgetGetterSetter = Idea.Util.widgetGetterSetter("tip_widget");
+
+
     /*
      * Straight arrow
      *
+     * @memberof Idea
+     * @constructor
      * @param father      Util.Widget, parental to Arrow, or Util.Canvas,
      *                    if Arrow doesn't have a parent and is drawn right
                           on the canvas.
@@ -14,20 +40,23 @@
      *                    arrow (if not specified, Triangles will be 
      *                    created and used by default).
      */
+
     Idea.Arrow = function(father, width, color, base, tip, base_widget, tip_widget){
-        if (width === undefined) {this._width = 1;}
-        else {this._width = width;}
-        if (color === undefined) {this._color = color;}
-        else {this._color = color;}
+        if (width === undefined) {widthGetterSetter.call(this, 1);}
+        else {widthGetterSetter.call(this, width);}
+        if (color === undefined) {colorGetterSetter.call(this, "#AAAAAA");}
+        else {colorGetterSetter.call(this, color);}
         //TODO allow to use other widgets dock points to be used 
         // as base and tip instead of just coordinates. Then arrow will
         // stick to widgets.
-        this._base = base;
-        this._tip = tip;
+        if (base === undefined) {throw new Error("Arrow's base coordinates undefined!");}
+        else {baseGetterSetter.call(this, base);}
+        if (tip === undefined) {throw new Error("Arrow's tip coordinates undefined!");}
+        else {tipGetterSetter.call(this, tip);}
         if (base_widget === undefined) {this._base_widget = null;}
-        else {this._base = base_widget;}
+        else {baseWidgetGetterSetter.call(this, base_widget);}
         if (tip_widget === undefined) {this._tip_widget = null;}
-        else {this._tip = tip_widget;}
+        else {tipWidgetGetterSetter.call(this, tip_widget);}
         //draw primitives
         this.father = father;
         if (this.father instanceof Idea.Canvas) {
@@ -45,57 +74,16 @@
             //TODO!!!!
         }
 
-
     };
 
     Idea.Util.extend(Idea.Arrow, Idea.Widget);
     Idea.Util.addAttrsToPrototype(Idea.Arrow, {
-        width: function(width){
-            if (width === undefined) {return this._width;}
-            else {
-                if (Idea.INTREGEX.test(width)) {this._width = width;}
-                else {throw new Error("Width should be int, got: '" + width + "'!");}
-            }
-        },
-        color: function(color){
-            if (color === undefined) {return this._color;}
-            else {
-                if (Idea.isHexColor(color)){ this._color = color;}
-                else {
-                    throw new Error("Color should be a valid color string, e.g #ACDC66, got: '" + color + "'!")};
-            }
-        },
-        base: function(base){
-            if (base === undefiend) {return this._base}
-            else {
-                if (base.hasattribute("x") && INTREGEX.test(base.x) && base.hasattribute("y") && INTREGEX.test(base.y)){
-                    this._base = base;
-                }//TODO TEST CANVAS SIZE
-            }
-        },
-        tip: function(tip){
-            if (tip === undefined) {return this._tip}
-            else {
-                if (tip.hasattribute("x") && INTREGEX.test(tip.x) && tip.hasattribute("y") && INTREGEX.test(tip.y)){
-                    this._tip = tip;
-                }//TODO TEST CANVAS SIZE
-               
-            }
-        },
-        base_widget: function(widget){
-            if (widget === undefined) {return this._base_widget;}
-            else {
-                if (widget instanceof Idea.Widget) {this._base_widget = widget;}
-                else {throw new Error("Expected widget as base_widget, got:'" +typeof widget + "'");}
-            }
-        },
-        tip_widget: function(widget){
-            if (widget === undefined) {return this._tip_widget;}
-            else {
-                if (widget instanceof Idea.Widget) {this._tip_widget = widget;}
-                else {throw new Error("Expected widget as tip_widget, got:'" +typeof widget + "'");}
-            }
-        },
+        width: widthGetterSetter, 
+        color: colorGetterSetter,
+        base: baseGetterSetter,
+        tip: tipGetterSetter,
+        base_widget: baseWidgetGetterSetter,
+        tip_widget: tipWidgetGetterSetter,
         accepts_event: function(evt){
             if (Idea.MOUSE_EVENTS.contains(evt.type)){
                 var coords = this.canvas.canvasCoordsForMouseEvent(evt);

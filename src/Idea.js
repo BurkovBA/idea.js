@@ -6,7 +6,7 @@
  * create or view your presentations.
  * 
  * Your GUI editor may be in one of 2 modes: edit or view. In edit mode you
- * are suppliedi with a canvas to draw your presentation on and with tools to 
+ * are supplied with a canvas to draw your presentation on and with tools to 
  * aid you. You can drag presentation elements around the canvas. 
  * You'll use view mode to display your presentation to users. If your audience 
  * is viewing your presentation in a browser, they can also interact with 
@@ -33,16 +33,21 @@
  * 
  * Widgets may contain daughterly widgets.
  *
- * Each widget corresponds to a LayerSet in the Layers bar. LayerSet may
- * contain daughterly Layers and LayerSets. Layer is an object, to which you 
- * apply low-level javascript drawing functions, such as lineTo(), stroke() 
- * etc.
+ * Each widget corresponds to a Group in the Layers bar. Group may
+ * contain daughterly Layers and Groups. Layer is a logical object, which
+ * corresponds to the widget itself, while its daughterly widgets
+ * are represented by their own Groups within current widget's Group.
  *
  * Note that you CAN'T write absolutely arbitrary javascript code in Source 
  * code bar for security reasons - otherwise, black hat hackers would've been
  * able to introduce malicious code otherwise. All the code, entered in Source
  * code bar is sanitized via white-list-based sanitizer.
-
+ *
+ * Idea.js makes use of getterSetters (possibly overloaded, i.e. in multiple forms)
+ * to access and modify attributes of objects. E.g. you can say widget.opacity()
+ * to obtain opacity value of your widget and say widget.opacity(0.5) to set
+ * its opacity to 50%. So the same method "opacity" acts both as getter and setter.
+ * 
  */
 
 var Idea = {};

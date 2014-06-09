@@ -6,7 +6,7 @@
  * create or view your presentations.
  * 
  * Your GUI editor may be in one of 2 modes: edit or view. In edit mode you
- * are suppliedi with a canvas to draw your presentation on and with tools to 
+ * are supplied with a canvas to draw your presentation on and with tools to 
  * aid you. You can drag presentation elements around the canvas. 
  * You'll use view mode to display your presentation to users. If your audience 
  * is viewing your presentation in a browser, they can also interact with 
@@ -33,16 +33,21 @@
  * 
  * Widgets may contain daughterly widgets.
  *
- * Each widget corresponds to a LayerSet in the Layers bar. LayerSet may
- * contain daughterly Layers and LayerSets. Layer is an object, to which you 
- * apply low-level javascript drawing functions, such as lineTo(), stroke() 
- * etc.
+ * Each widget corresponds to a Group in the Layers bar. Group may
+ * contain daughterly Layers and Groups. Layer is a logical object, which
+ * corresponds to the widget itself, while its daughterly widgets
+ * are represented by their own Groups within current widget's Group.
  *
  * Note that you CAN'T write absolutely arbitrary javascript code in Source 
  * code bar for security reasons - otherwise, black hat hackers would've been
  * able to introduce malicious code otherwise. All the code, entered in Source
  * code bar is sanitized via white-list-based sanitizer.
-
+ *
+ * Idea.js makes use of getterSetters (possibly overloaded, i.e. in multiple forms)
+ * to access and modify attributes of objects. E.g. you can say widget.opacity()
+ * to obtain opacity value of your widget and say widget.opacity(0.5) to set
+ * its opacity to 50%. So the same method "opacity" acts both as getter and setter.
+ * 
  */
 
 var Idea = {};
@@ -77,7 +82,7 @@ var Idea = {};
         XLINKNS: 'http://www.w3.org/1999/xlink',
         MOUSE_EVENTS: ["click", "dblclick", "mousedown", "mousemove", "mouseout", "mouseover", "mouseup"],
         KEYBOARD_EVENTS: ["keydown", "keypress", "keyup"],
-        INTREGEX: /^\d+$/,
+        UINTREGEX: /^\d+$/,
         isHexColor: function(color){return /^#[0-9A-F]{6}$/i.test(color)},
         extend: function(Child, Parent){
            var F = function(){ };
@@ -123,7 +128,82 @@ var Idea = {};
             }
             father.appendChild(elem);
             return elem;
+        },
+        
+        /*
+         * Idea.js makes use of getterSetters (possibly overloaded) to
+         * access attributes. E.g. you can say widget.opacity() to obtain
+         * opacity value of your widget and say widget.opacity(0.5) to set
+         * its opacity to 50%. So the same method "opacity" acts both as
+         * getter and setter.
+         * 
+         * When you invoke setter, Idea.js checks that you supplied an
+         * appropriate value to it - performs "validation". In order to 
+         * re-use the simplest and most common getterSetters, we store
+         * factory functions, generating them, here.
+         */ 
+
+        /*
+         * Factory function that returns getterSetter function, which,
+         * as getter, returns value of arg_name or, as setter, validates
+         * input value, checking, if it's an unsigned integer.
+         * 
+         * @function
+         * @memberof Idea.Util
+         * @param arg_name  name of argument to get/set with this method.
+         */
+        uintGetterSetter: function(arg_name){
+            return function(arg){
+                if (arg === undefined) {return this["_"+arg_name];}
+                else {
+                    if (Idea.Util.UINTREGEX.test(arg)) {
+                        this["_"+arg_name] = arg;
+                    }
+                    else {
+                        throw new Error(arg_name + " should be unsigned int, got: '" + arg + "'!");
+                    }
+                }
+            };
+        },
+        /*
+         * Factory function that returns getterSetter function, which,
+         * as getter, returns value of arg_name or, as setter, validates
+         * input value, checking, if it's a color literal.
+         * 
+         * @function
+         * @memberof Idea.Util
+         * @param arg_name  name of argument to get/set with this method.
+         */
+        colorGetterSetter: function(arg_name){
+            //TODO!!! COLOR literals, e.g. rgb, rgba or trivial color names
+            return function(arg){
+            if (arg === undefined) {return this["_"+arg_name];}
+            else {
+                if (Idea.Util.isHexColor(arg)){ this["_"+arg_name] = arg;}
+                else {
+                    throw new Error(arg_name + " should be a valid color string, e.g #ACDC66, got: '" + arg + "'!")};
+                }
+            };
+        },
+        /*
+         * Factory function that returns getterSetter function, which,
+         * as getter, returns value of arg_name or, as setter, validates
+         * input value, checking, if it's a Util.Widget subclass.
+         * 
+         * @function
+         * @memberof Idea.Util
+         * @param arg_name  name of argument to get/set with this method.
+         */
+        widgetGetterSetter: function(arg_name){
+            return function(arg){
+                if (arg === undefined) {return this["_"+arg_name];}
+                else {
+                    if (arg instanceof Idea.Widget) {this["_"+arg_name] = arg;}
+                    else {throw new Error(arg_name + "should be a Util.Widget subclass, got:'" + typeof arg + "'!");}
+                }
+            };
         }
+
     };
 })();
 
@@ -423,9 +503,35 @@ var Idea = {};
 })();
 
 (function(){
+
+    var widthGetterSetter = Idea.Util.uintGetterSetter("width");
+    var colorGetterSetter = Idea.Util.colorGetterSetter("color");
+    var baseGetterSetter = function(base){
+        if (base === undefined) {return this._base}
+        else {
+            if (base.hasOwnProperty("x") && Idea.Util.UINTREGEX.test(base.x) && base.hasOwnProperty("y") && Idea.Util.UINTREGEX.test(base.y)){
+                this._base = base;
+            }//TODO TEST CANVAS SIZE
+        }
+    };
+    var tipGetterSetter = function(tip){
+        if (tip === undefined) {return this._tip}
+        else {
+            if (tip.hasOwnProperty("x") && Idea.Util.UINTREGEX.test(tip.x) && tip.hasOwnProperty("y") && Idea.Util.UINTREGEX.test(tip.y)){
+                this._tip = tip;
+            }//TODO TEST CANVAS SIZE
+           
+        }
+    };
+    var baseWidgetGetterSetter = Idea.Util.widgetGetterSetter("base_widget");
+    var tipWidgetGetterSetter = Idea.Util.widgetGetterSetter("tip_widget");
+
+
     /*
      * Straight arrow
      *
+     * @memberof Idea
+     * @constructor
      * @param father      Util.Widget, parental to Arrow, or Util.Canvas,
      *                    if Arrow doesn't have a parent and is drawn right
                           on the canvas.
@@ -438,20 +544,23 @@ var Idea = {};
      *                    arrow (if not specified, Triangles will be 
      *                    created and used by default).
      */
+
     Idea.Arrow = function(father, width, color, base, tip, base_widget, tip_widget){
-        if (width === undefined) {this._width = 1;}
-        else {this._width = width;}
-        if (color === undefined) {this._color = color;}
-        else {this._color = color;}
+        if (width === undefined) {widthGetterSetter.call(this, 1);}
+        else {widthGetterSetter.call(this, width);}
+        if (color === undefined) {colorGetterSetter.call(this, "#AAAAAA");}
+        else {colorGetterSetter.call(this, color);}
         //TODO allow to use other widgets dock points to be used 
         // as base and tip instead of just coordinates. Then arrow will
         // stick to widgets.
-        this._base = base;
-        this._tip = tip;
+        if (base === undefined) {throw new Error("Arrow's base coordinates undefined!");}
+        else {baseGetterSetter.call(this, base);}
+        if (tip === undefined) {throw new Error("Arrow's tip coordinates undefined!");}
+        else {tipGetterSetter.call(this, tip);}
         if (base_widget === undefined) {this._base_widget = null;}
-        else {this._base = base_widget;}
+        else {baseWidgetGetterSetter.call(this, base_widget);}
         if (tip_widget === undefined) {this._tip_widget = null;}
-        else {this._tip = tip_widget;}
+        else {tipWidgetGetterSetter.call(this, tip_widget);}
         //draw primitives
         this.father = father;
         if (this.father instanceof Idea.Canvas) {
@@ -469,57 +578,16 @@ var Idea = {};
             //TODO!!!!
         }
 
-
     };
 
     Idea.Util.extend(Idea.Arrow, Idea.Widget);
     Idea.Util.addAttrsToPrototype(Idea.Arrow, {
-        width: function(width){
-            if (width === undefined) {return this._width;}
-            else {
-                if (Idea.INTREGEX.test(width)) {this._width = width;}
-                else {throw new Error("Width should be int, got: '" + width + "'!");}
-            }
-        },
-        color: function(color){
-            if (color === undefined) {return this._color;}
-            else {
-                if (Idea.isHexColor(color)){ this._color = color;}
-                else {
-                    throw new Error("Color should be a valid color string, e.g #ACDC66, got: '" + color + "'!")};
-            }
-        },
-        base: function(base){
-            if (base === undefiend) {return this._base}
-            else {
-                if (base.hasattribute("x") && INTREGEX.test(base.x) && base.hasattribute("y") && INTREGEX.test(base.y)){
-                    this._base = base;
-                }//TODO TEST CANVAS SIZE
-            }
-        },
-        tip: function(tip){
-            if (tip === undefined) {return this._tip}
-            else {
-                if (tip.hasattribute("x") && INTREGEX.test(tip.x) && tip.hasattribute("y") && INTREGEX.test(tip.y)){
-                    this._tip = tip;
-                }//TODO TEST CANVAS SIZE
-               
-            }
-        },
-        base_widget: function(widget){
-            if (widget === undefined) {return this._base_widget;}
-            else {
-                if (widget instanceof Idea.Widget) {this._base_widget = widget;}
-                else {throw new Error("Expected widget as base_widget, got:'" +typeof widget + "'");}
-            }
-        },
-        tip_widget: function(widget){
-            if (widget === undefined) {return this._tip_widget;}
-            else {
-                if (widget instanceof Idea.Widget) {this._tip_widget = widget;}
-                else {throw new Error("Expected widget as tip_widget, got:'" +typeof widget + "'");}
-            }
-        },
+        width: widthGetterSetter, 
+        color: colorGetterSetter,
+        base: baseGetterSetter,
+        tip: tipGetterSetter,
+        base_widget: baseWidgetGetterSetter,
+        tip_widget: tipWidgetGetterSetter,
         accepts_event: function(evt){
             if (Idea.MOUSE_EVENTS.contains(evt.type)){
                 var coords = this.canvas.canvasCoordsForMouseEvent(evt);
@@ -531,5 +599,67 @@ var Idea = {};
                 }
             }
         }
+    });
+})();
+
+(function(){
+    var xGetterSetter = Idea.Util.uintGetterSetter("x");
+    var yGetterSetter = Idea.Util.uintGetterSetter("y");
+    var widthGetterSetter = Idea.Util.uintGetterSetter("width");
+    var heightGetterSetter = Idea.Util.uintGetterSetter("height");
+    var rxGetterSetter = Idea.Util.uintGetterSetter("rx");
+    var ryGetterSetter = Idea.Util.uintGetterSetter("ry");
+
+
+    /*
+     * Simple rectangle with content and/or with rounded corners.
+     *
+     * @param father       Util.Widget, parental to Rectangle, or Util.Canvas,
+     *                     if Rectangle doesn't have a parent and is drawn right
+     *                     on the canvas.
+     * @param x            x coordinate of top-left corner of the rectangle
+     * @param y            y coordinate of top-left corner of the rectangle
+     * @param width        width of the rectangle
+     * @param height       height of the rectangle
+     * @param rx           x-axis radius of corners
+     * @param ry           y-axis radius of corners
+     * @param stroke       set of stroke attributes.
+     * @param fill         set of fill attributes.
+     * @param content
+     */
+    Idea.Rectangle = function(father, width, height, rx, ry) { //, stroke, fill, content){
+        if (x === undefined) {throw new Error("x not specified!");}
+        if (y === undefined) {throw new Error("y not specified!");}
+        if (width === undefined) {throw new Error("width not specified");}
+        if (height === undefined) {throw new Error("height not specified");}
+        if (rx === undefined) {rxGetterSetter.call(this, 0);}
+        if (ry === undefined) {ryGetterSetter.call(this, 0);}
+        //draw primitives
+        this.father = father;
+        if (this.father instanceof Idea.Canvas) {
+            this._group = Idea.Util.createSVGElement(this.father._canvas, 'g', {});
+            this._drawing = Idea.Util.createSVGElement(this._group, 'rect', {
+                "x1": this._base.x,
+                "y1": this._base.y,
+                "x2": this._tip.x,
+                "y2": this._tip.y
+            });
+            //this._drawing.style.stroke = this._color;
+            //this._drawing.style['stroke-width'] = this.width;
+        }
+        else {
+            //TODO!!!!
+        }
+
+    };
+
+    Idea.Util.extend(Idea.Arrow, Idea.Widget);
+    Idea.Util.addAttrsToPrototype(Idea.Arrow, {
+        x: xGetterSetter,
+        y: yGetterSetter,
+        width: widthGetterSetter,
+        height: heightGetterSetter,
+        rx: rxGetterSetter,
+        ry: ryGetterSetter,
     });
 })();

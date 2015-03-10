@@ -1,5 +1,6 @@
 (function(){
-    Idea.Widget = function(slide){
+
+    var Widget = function(slide){
         this.slide = slide;
         this.events = {
             click: function(){},
@@ -18,7 +19,8 @@
         };
     };
 
-    Idea.Widget.prototype = {
+    Widget.prototype = {
+        constructor: Widget,
         /*
          * this accepts_event() implementation is a dummy template for heir 
          * widgets; override it in widgets, you inherit from Widget
@@ -32,4 +34,14 @@
             return false; //here we just return dummy false
         }
     };
+
+    Object.defineProperty(Idea.prototype.Slide.fn, "Widget", {
+        get: function(){
+            var binded_widget = Widget.bind(null, this);
+            binded_widget.fn = Widget.prototype;
+            binded_widget.cons = Widget;
+            return binded_widget;
+        }
+    });
+
 })();

@@ -28,7 +28,9 @@
      *
      * @memberof Idea
      * @constructor
-     * @param father      Util.Widget, parental to Arrow, or Util.Canvas,
+     * @param owner       Idea.Canvas.Slide or its child widget that contains
+                          the Arrow.
+     * @param father      Util.Widget, parental to Arrow, or Canvas,
      *                    if Arrow doesn't have a parent and is drawn right
                           on the canvas.
      * @param width       width of arrow line, defaults to 1px.
@@ -41,7 +43,7 @@
      *                    created and used by default).
      */
 
-    Idea.Arrow = function(father, width, color, base, tip, base_widget, tip_widget){
+    var Arrow = function(owner, father, width, color, base, tip, base_widget, tip_widget){
         if (width === undefined) {widthGetterSetter.call(this, 1);}
         else {widthGetterSetter.call(this, width);}
         if (color === undefined) {colorGetterSetter.call(this, "#AAAAAA");}
@@ -59,7 +61,7 @@
         else {tipWidgetGetterSetter.call(this, tip_widget);}
         //draw primitives
         this.father = father;
-        if (this.father instanceof Idea.Canvas) {
+        if (this.father instanceof Idea.prototype.Canvas) {
             this._group = Idea.Util.createSVGElement(this.father._canvas, 'g', {});
             this._drawing = Idea.Util.createSVGElement(this._group, 'line', {
                 "x1": this._base.x,
@@ -76,8 +78,17 @@
 
     };
 
-    Idea.Util.extend(Idea.Arrow, Idea.Widget);
-    Idea.Util.addAttrsToPrototype(Idea.Arrow, {
+    Object.defineProperty(Idea.prototype.Slide.fn, "Arrow", {
+        get: function(){
+            var binded_arrow = Arrow.bind(null, this);
+            binded_arrow.fn = Arrow.prototype;
+            binded_arrow.cons = Arrow;
+            return binded_arrow;
+        }
+    });
+
+    Idea.Util.extend(Arrow, Idea.prototype.Slide.fn.Widget);
+    Idea.Util.addAttrsToPrototype(Idea.prototype.Slide.fn.Arrow, {
         width: widthGetterSetter, 
         color: colorGetterSetter,
         base: baseGetterSetter,
@@ -85,7 +96,7 @@
         base_widget: baseWidgetGetterSetter,
         tip_widget: tipWidgetGetterSetter,
         accepts_event: function(evt){
-            if (Idea.MOUSE_EVENTS.contains(evt.type)){
+            if (Idea.Util.MOUSE_EVENTS.contains(evt.type)){
                 var coords = this.canvas.canvasCoordsForMouseEvent(evt);
                 if (Idea.Util.pointOnLine(this.base().x, this.base().y, this.tip().x, this.tip().y, this.width(), coords.x, coords.y)) {
                         return true;

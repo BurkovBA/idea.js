@@ -5,6 +5,8 @@
  * Idea.js also comes with an in-browser GUI viewer/editor, where you can 
  * create or view your presentations.
  * 
+ * GUI viewer/editor elements
+ * 
  * Your GUI editor may be in one of 2 modes: edit or view. In edit mode you
  * are supplied with a canvas to draw your presentation on and with tools to 
  * aid you. You can drag presentation elements around the canvas. 
@@ -33,14 +35,23 @@
  * 
  * Widgets may contain daughterly widgets.
  *
- * Each widget corresponds to a Group in the Layers bar. Group may
- * contain daughterly Layers and Groups. Layer is a logical object, which
- * corresponds to the widget itself, while its daughterly widgets
- * are represented by their own Groups within current widget's Group.
+ * Layers bar
  *
+ * Layers bar describes the order of Widgets on your Canvas. Layers bar 
+ * contains Layers and Layer Groups. A Layer is an object, on which you put
+ * low-level drawing primitives that comprise your Widgets. A Layer Group 
+ * (or just Group) is an ordered set of Layers and/or daughterly Layer Groups. 
+ * Each Widget corresponds to a Layer Group. The most primitive Widgets consist
+ * of a Layer Group, which contains a single Layer. The Widget primitives are
+ * drawn on that Layer.  If the widget contains daughterly widgets, each 
+ * daughterly Widget corresponds to its own Layer Group within the parent 
+ * Layer's Layer Group.
+ *
+ * Source code bar 
+ * 
  * Note that you CAN'T write absolutely arbitrary javascript code in Source 
  * code bar for security reasons - otherwise, black hat hackers would've been
- * able to introduce malicious code otherwise. All the code, entered in Source
+ * able to introduce malicious code. All the code, entered in Source
  * code bar is sanitized via white-list-based sanitizer.
  *
  * Idea.js makes use of getterSetters (possibly overloaded, i.e. in multiple forms)
@@ -50,20 +61,69 @@
  * 
  */
 
-var Idea = {};
-(function(){
-    Idea = {
-        Util: {},
+/*
+ * This is a single instance of GUI with Idea.Canvas, with GUI elements 
+ * specified and with a separate set of configuration options.
+ *
+ */
 
-        Canvas: {},
+Idea = function(){
 
-        Slide: {},
+        this.slides = [new this.Slide()]; // slides in correct order
+        this._slide = this.slides[0]; // currently active slide
+        this._mode = "view"; // "view" or "edit" mode
 
-        Widget: {},
+        this.gui = {};
+        this._div = document.createElement('div');
+        this._topdiv = document.createElement('div');
+        this.gui.slidebar = new this.Slidebar();
+        this._topdiv.appendChild(this.gui.slidebar._div);
+        this.canvas = new this.Canvas(this);
+        this._topdiv.appendChild(this.canvas._div);
+        this.gui.tools = new this.Toolbar();
+        this._topdiv.appendChild(this.gui.tools._div);
+        this._div.appendChild(this._topdiv);
+        this.gui.timeline = new this.Timeline();
+        this._div.appendChild(this.gui.timeline._div);
+};
 
-        Arrow: {}
-    };
-})();
+/*
+ * Idea.Util contains convenience functions, objects and constants for Idea.js programmers,
+ * writing both library core and extensions, widgets etc.
+ */
+
+Idea.Util = {};
+
+/*
+ * Idea.Conf contains configuration defaults (e.g. Canvas size, framerate etc.)
+ * and when you say var idea = new Idea();, idea.conf's content is cloned from
+ * Conf's contents.
+ */
+
+Idea.Conf = {};
+
+Idea.prototype = {
+
+    insertSlide: function(index, slide){
+        // create and insert slide preview to the slidebar
+        if (index > this.slides.length){
+            // raise Exception
+        }
+        else {
+            var previous_slide_preview = this.gui.slidebar.getChildNodes()[index];
+            var div = document.createElement('div');
+            // TODO create preview
+            this.gui.slidebar.insertBefore(div, previous_slide_preview)
+        }
+        this.splice(index, 0, slide);
+    },
+    appendSlide: function(slide){
+        this.insertSlide(this.length, slide);
+    }
+
+};
+
+Idea.prototype.constructor = Idea;
 
 (function(){
     Idea.Conf = {
@@ -84,13 +144,118 @@ var Idea = {};
         KEYBOARD_EVENTS: ["keydown", "keypress", "keyup"],
         UINTREGEX: /^\d+$/,
         isHexColor: function(color){return /^#[0-9A-F]{6}$/i.test(color)},
-        extend: function(Child, Parent){
-           var F = function(){ };
-           F.prototype = Parent.prototype;
-           Child.prototype = new F();
-           Child.prototype.constructor = Child;
-           Child.superclass = Parent.prototype;
+
+        normalizeMouseEvent: function(event){
+            // ie has event undefined; instead, it has window.event
+            event = event || window.event;
+
+            // ie events have button property instead of which property and 
+            // reasonable 1/2/4 key codes instead of 1/3/2 (alas, W3C chose 1/3/2).
+            // We map event.button onto event.which as described here:
+            // http://www.martinrinehart.com/early-sites/mrwebsite_old/examples/cross_browser_mouse_events.html
+            var which = event.which ? event.which :
+            event.button === 1 ? 1 :
+            event.button === 2 ? 3 : 
+            event.button === 4 ? 2 : 1;
+
+            // ie has event.x/event.y instead of event.clientX/event.clientY
+            var clientX = event.x || event.clientX;
+            var clientY = event.y || event.clientY;
+
+            // ie ain't got pageX/pageY, create them, using the code from:
+            // http://javascript.ru/tutorial/events/properties#elementy-svyazannye-s-sobytiem
+            var pageX, pageY;
+            if (event.pageX){
+                pageX = event.pageX;
+                pageY = event.pageY;
+            }
+            else{
+                // see here, how to check for null/undefined:
+                // http://stackoverflow.com/questions/2559318/how-to-check-for-an-undefined-or-null-variable-in-javascript
+                if (event.pageX == null && clientX != null ) { 
+                    var html = document.documentElement;
+                    var body = document.body;
+                
+                    pageX = clientX + (html && html.scrollLeft || body && body.scrollLeft || 0) - (html.clientLeft || 0);
+                    pageY = clientY + (html && html.scrollTop || body && body.scrollTop || 0) - (html.clientTop || 0);
+                }                
+            }
+
+            // ie has srcElement instead of event.target
+            var target = event.target || event.srcElement;
+
+            // ie has fromElement/srcElement instead of target
+            var relatedTarget;
+            if (event.relatedTarget) relatedTarget = event.relatedTarget;
+            if (!event.relatedTarget && event.fromElement) {
+                relatedTarget = (event.fromElement == event.target) ? event.toElement : event.fromElement
+            }
+
+            var normalizedEvent = {
+                target: target,
+                nativeEvent: event,
+                which: which,
+                clientX: clientX,
+                clientY: clientY,
+                pageX: pageX,
+                pageY: pageY
+            }
+            if (relatedTarget) normalizedEvent.relatedTarget = relatedTarget;
+            return normalizedEvent;
         },
+
+        /*
+         * Classical Douglas Crockford's extend.
+         *
+         * @method
+         * @memberof Idea.Util
+         * @param Child - Child constructor, whose prototype shall extend Parent's prototype
+         * @param Parent - Parent constructor, whose prototype is extended
+         */
+
+        crockfordsExtend: function(Child, Parent){
+            var F = function(){};
+            F.prototype = Parent.prototype;
+            Child.prototype = new F();
+            Child.prototype.constructor = Child;
+            Child.superclass = Parent.prototype;
+        },
+
+        /*
+         * Variation of Crockford's extend with regard to getters/setters:
+         * Sometimes I say e.g. new idea.Slide(), where idea.Slide is not
+         * the real Slide constructor, but getter method, which returns the result
+         * of binding of the actual Slide constructor to Idea instance:
+         * Slide.bind(this) ("this" is idea instance, the getter is stored in,
+         * so that within Slide constructor the idea instance is available as a variable,
+         * automatically passed to the constructor. The problem is that prototype
+         * of this bound constructor differs from prototype of unbound constructor.
+         * Thus we store a reference to the real prototype of unbound constructor 
+         * in "fn" variable of bound. This extend checks, whether "fn" attribute is
+         * present or not in the Child and Parent and extends it, if it exists.
+         *
+         */
+
+        extend: function(Child, Parent){
+            var parent_prototype;
+            if ("fn" in Parent){ parent_prototype = Parent.fn } // WARNING
+            else { parent_prototype = Parent.prototype; }
+
+
+            var F = function(){};
+            F.prototype = parent_prototype;
+            if ("fn" in Child) {
+                Child.fn = new F();
+                Child.fn.constructor = Child.cons;
+                Child.cons.superclass = parent_prototype;
+            }
+            else {
+                Child.prototype = new F();
+                Child.prototype.constructor = Child;
+                Child.superclass = parent_prototype;
+            }  
+        },
+
         /*
          * Dynamically adds attributes to constructor's prototype.
          *
@@ -101,11 +266,21 @@ var Idea = {};
          *                      constructor.prototype.
          * 
          */
+
         addAttrsToPrototype: function(constructor, attrs){
-            for (var key in attrs){
-                constructor.prototype[key] = attrs[key];
+            var key;
+            if ("fn" in constructor){
+                for (key in attrs){
+                    constructor.fn[key] = attrs[key];
+                }
+            }
+            else{
+                for (key in attrs){
+                    constructor.prototype[key] = attrs[key];
+                }                
             }
         },
+
         /*
          * Creates, appends to father tag and returns SVG primitive 
          * (e.g. rect, group etc.).
@@ -114,7 +289,8 @@ var Idea = {};
          * @memberof Idea.Util
          * @param father  svg element that is the parent of newly created one.
          * @param tag     type of newly created svg element (e.g. 'rect' or 'g').
-         * @param attrs   dict with attributes of newly created element.
+         * @param attrs   object with attributes of newly created element.
+         * @returns       newly created element
          *
          */
 
@@ -122,12 +298,62 @@ var Idea = {};
             var elem = document.createElementNS(this.SVGNS, tag);
             for (var key in attrs){
                 if (key == "xlink:href") {
-                    elem.setAttributeNS(XLINKNS, 'href', attrs[key]);
+                    elem.setAttributeNS(this.XLINKNS, 'href', attrs[key]);
                 }
                 else {elem.setAttribute(key, attrs[key]);}
             }
             father.appendChild(elem);
             return elem;
+        },
+
+        /*
+         * Given coordinates of mouse event in window coordinate system
+         * (e.g. (event.clientX, event.clientY)) that happened within an <svg> element,
+         * returns the canvas coordinates (we call that <svg> element "canvas") of
+         * that location. We also call those coordinates "viewbox" coordinates
+         * or "real world" coordinates.
+         *
+         * For description of coordinate systems, see:
+         *     http://www.w3.org/TR/SVG/coords.html
+         *     http://sarasoueidan.com/blog/svg-coordinate-systems/
+         * 
+         * Note: coordinate system of an element within svg canvas (e.g. <rect>)
+         * may differ from global canvas coordinate system, if transformations 
+         * (e.g. rotation) are applied to your <rect> - your <rect>'s coordinate 
+         * system will be rotated relative to canvas coordinate system.
+         *
+         * Note: if rotation is applied to your element, it also has a
+         * different boundingclientrect.
+         *   http://phrogz.net/getboundingclientrect-is-lame-for-svg
+         *
+         * Note: this also assumes that preserveAspectRatio on canvas is disabled.
+         *
+         * @method
+         * @memberof Idea.Util
+         * @param x         user coordinates x
+         * @param y         user coordinates y
+         * @param canvas    svg canvas where the mouse event happened
+         * 
+         */
+
+        windowCoordsToCanvasCoords: function(x, y, canvas){
+            // Note the difference between getBoundingClientRect() and getBBox():
+            // http://stackoverflow.com/questions/6179173/how-is-the-getbbox-svgrect-calculated
+            var canvasRectangle = canvas.getBoundingClientRect(); // this is relative to window - the browser viewport
+            var canvasTopOffset = y - canvasRectangle.top; // in window coordinates
+            var canvasLeftOffset = x - canvasRectangle.left; // in window coordinates
+
+            var viewbox = canvas.getAttributeNS(null, 'viewBox');
+            var viewbox_dimensions = viewbox.split(" ");
+            viewbox_dimensions.forEach(function(element, index, array){array[index] = parseInt(element);})
+
+            var canvasToUserXRatio = viewbox_dimensions[2] / canvasRectangle.width;
+            var canvasToUserYRatio = viewbox_dimensions[3] / canvasRectangle.height;
+
+            var canvasX = parseInt(viewbox_dimensions[0] + canvasToUserXRatio * canvasLeftOffset);
+            var canvasY = parseInt(viewbox_dimensions[1] + canvasToUserYRatio * canvasTopOffset);
+            var canvasCoords = {x: canvasX, y: canvasY};
+            return canvasCoords;
         },
         
         /*
@@ -138,9 +364,13 @@ var Idea = {};
          * getter and setter.
          * 
          * When you invoke setter, Idea.js checks that you supplied an
-         * appropriate value to it - performs "validation". In order to 
-         * re-use the simplest and most common getterSetters, we store
-         * factory functions, generating them, here.
+         * appropriate value to it - performs "validation". E.g. opacity
+         * value should be a non-negative float between 0 and 1 and when you
+         * call widget.opacity(value), it first validates the value, i.e. 
+         * checks that it is between 0 and 1, before assigning opacity to it.
+         *
+         * In order to re-use the simplest and most common getterSetters, 
+         * we store factory functions, generating them, here.
          */ 
 
         /*
@@ -152,6 +382,7 @@ var Idea = {};
          * @memberof Idea.Util
          * @param arg_name  name of argument to get/set with this method.
          */
+
         uintGetterSetter: function(arg_name){
             return function(arg){
                 if (arg === undefined) {return this["_"+arg_name];}
@@ -165,6 +396,7 @@ var Idea = {};
                 }
             };
         },
+
         /*
          * Factory function that returns getterSetter function, which,
          * as getter, returns value of arg_name or, as setter, validates
@@ -174,17 +406,20 @@ var Idea = {};
          * @memberof Idea.Util
          * @param arg_name  name of argument to get/set with this method.
          */
+
         colorGetterSetter: function(arg_name){
             //TODO!!! COLOR literals, e.g. rgb, rgba or trivial color names
             return function(arg){
-            if (arg === undefined) {return this["_"+arg_name];}
-            else {
-                if (Idea.Util.isHexColor(arg)){ this["_"+arg_name] = arg;}
+                if (arg === undefined) {return this["_"+arg_name];}
                 else {
-                    throw new Error(arg_name + " should be a valid color string, e.g #ACDC66, got: '" + arg + "'!")};
+                    if (Idea.Util.isHexColor(arg)){ this["_"+arg_name] = arg;}
+                    else {
+                        throw new Error(arg_name + " should be a valid color string, e.g #ACDC66, got: '" + arg + "'!");
+                    }
                 }
             };
         },
+
         /*
          * Factory function that returns getterSetter function, which,
          * as getter, returns value of arg_name or, as setter, validates
@@ -194,12 +429,13 @@ var Idea = {};
          * @memberof Idea.Util
          * @param arg_name  name of argument to get/set with this method.
          */
+
         widgetGetterSetter: function(arg_name){
             return function(arg){
                 if (arg === undefined) {return this["_"+arg_name];}
                 else {
-                    if (arg instanceof Idea.Widget) {this["_"+arg_name] = arg;}
-                    else {throw new Error(arg_name + "should be a Util.Widget subclass, got:'" + typeof arg + "'!");}
+                    if (arg instanceof Idea.prototype.Widget) {this["_"+arg_name] = arg;}
+                    else {throw new Error(arg_name + "should be a Util.prototype.Widget subclass, got:'" + typeof arg + "'!");}
                 }
             };
         }
@@ -208,7 +444,7 @@ var Idea = {};
 })();
 
 /*
- * Canvas is a huge, almost infinite flat area, and user looks
+ * Canvas is an infinite (well, almost) flat area, and user looks
  * at it through a finite viewport, can zoom in and out. In practice,
  * these "almost infinite" width and height of canvas are defined
  * as constants in Idea.Conf.
@@ -234,7 +470,8 @@ var Idea = {};
      *
      */
 
-    Idea.Canvas = function(width, height){
+    Idea.prototype.Canvas = function(idea, width, height){
+        var x, y;
         //create a div container for our canvas
         this._div = document.createElement('div');
         this._div.style.border = "1px solid rgb(200,200,200)";
@@ -252,17 +489,15 @@ var Idea = {};
         //check if width/height is set and define the size of viewport
         var viewbox;
         if (!((width === undefined) || (height === undefined))) {
-            var x = Idea.Conf.canvas_width/2;
-            var y = Idea.Conf.canvas/2 - height;
-            var width = width;
-            var height = height;
+            x = Idea.Conf.canvas_width/2;
+            y = Idea.Conf.canvas/2 - height;
             viewbox =  "" + x + " " + y + " " + width + " " + height;
         }
         else {
-            var x = Idea.Conf.canvas_width/2;
-            var y = Idea.Conf.canvas_height/2 - Idea.Conf.default_viewport_width;
-            var width = Idea.Conf.default_viewport_width;
-            var height = Idea.Conf.default_viewport_height;
+            x = Idea.Conf.canvas_width/2;
+            y = Idea.Conf.canvas_height/2 - Idea.Conf.default_viewport_width;
+            width = Idea.Conf.default_viewport_width;
+            height = Idea.Conf.default_viewport_height;
             viewbox =  "" + x + " " + y + " " + width + " " + height;
         }
         alert(viewbox);
@@ -278,30 +513,20 @@ var Idea = {};
         this._grip.style.background = "#AAAAAA";
         this._grip.style.float = "right";
         this._div.appendChild(this._grip);
-        //to fight incompatibilitiy of mouse button codes between IE and browsers,
-        //we use tricks with event.which and event.button, for explanation see:
-        //http://www.martinrinehart.com/early-sites/mrwebsite_old/examples/cross_browser_mouse_events.html
+
         this._grip.onmousedown = function(event){
-            var event = event || window.event;
-            var which = event.which ? event.which :
-                event.button === 1 ? 1 :
-                event.button === 2 ? 3 : 
-                event.button === 4 ? 2 : 1;
-            if (which == 1) {
+            event = Idea.Util.normalizeMouseEvent(event);
+            if (event.which == 1) {
                 this._grip_pressed = true;
-                this._grip_x = event.x || event.clientX;
-                this._grip_y = event.y || event.clientY;
+                this._grip_x = event.clientX;
+                this._grip_y = event.clientY;
                 //add event listeners to <html> (i.e. document.documentElement)
                 //to respond to mousemove and mouseup if they're outside _grip.
                 //idea taken from here:
                 //http://stackoverflow.com/questions/8960193/how-to-make-html-element-resizable-using-pure-javascript
                 var Up = function(event){
-                    var event = event || window.event;
-                    var which = event.which ? event.which :
-                    event.button === 1 ? 1 :
-                    event.button === 2 ? 3 : 
-                    event.button === 4 ? 2 : 1;
-                    if (which == 1) {
+                    event = Idea.Util.normalizeMouseEvent(event)
+                    if (event.which == 1) {
                         this._grip_pressed = false;
                         document.documentElement.removeEventListener('mousemove', Move, false);
                         document.documentElement.removeEventListener('mouseup', Up, false);
@@ -309,14 +534,12 @@ var Idea = {};
                 }.bind(this);
                 
                 var Move = function(event) {
-                    var event = event || window.event;
-                    event.x = event.x || event.clientX;
-                    event.y = event.y || event.clientY;
-                    if (this._grip_pressed == true){
-                        this.width(parseInt(this.width()) + event.x - this._grip_x);
-                        this.height(parseInt(this.height()) + event.y - this._grip_y);
-                        this._grip_x = event.x;
-                        this._grip_y = event.y;
+                    event = Idea.Util.normalizeMouseEvent(event)
+                    if (this._grip_pressed === true){
+                        this.width(parseInt(this.width()) + event.clientX - this._grip_x);
+                        this.height(parseInt(this.height()) + event.clientY - this._grip_y);
+                        this._grip_x = event.clientX;
+                        this._grip_y = event.clientY;
                     }
                 }.bind(this);
 
@@ -325,7 +548,7 @@ var Idea = {};
             }
         }.bind(this);
         this._grip.onmouseover = function(event){
-            var event = event || window.event;
+            event = Idea.Util.normalizeMouseEvent(event);
             this.style.cursor = "nw-resize";
         };
         //create clear element to clear floats
@@ -344,14 +567,11 @@ var Idea = {};
         this.rect.style.fill = "none";
         //TODO REMOVE THIS IT'S A TEST
 
-        this.slides = [new Idea.Slide(this)]; //array of slides in order from 1st to last
-        this._slide = this.slides[0];
-        this._mode = "view"; // "view" or "edit" mode
 
         // http://en.wikipedia.org/wiki/HTML_attribute - list of events
 
         // Note: we call bind() on event handlers to have "this" refer
-        // to our Idea.Canvas object, not to this._canvas, as it would've
+        // to our Idea.prototype.Canvas object, not to this._canvas, as it would've
         // been in event handler context.
         this._canvas.onclick = this.click.bind(this);
         this._canvas.ondblclick = this.dblclick.bind(this);
@@ -367,7 +587,7 @@ var Idea = {};
 
     };
 
-    Idea.Canvas.prototype = {
+    Idea.prototype.Canvas.prototype = {
         slide: function(slide){
             if (slide === undefined) {return this._slide;}
             else {
@@ -396,7 +616,7 @@ var Idea = {};
 
         //events-related code
         _propagateEventToWidgets: function(evt){
-            for (i=this.slide().widgets.length-1; i >= 0; i++) {
+            for (var i=this.slide().widgets.length-1; i >= 0; i++) {
                 var widget = this.slide().widgets[i];
                 if (widget.accepts_event(evt)){
                     break;
@@ -411,63 +631,128 @@ var Idea = {};
             };
         },
         click: function(event){
-            var event = event || window.event // "|| window.event" for  cross-IEness
+            event = event || window.event // "|| window.event" for  cross-IEness
             this._propagateEventToWidgets(event);
         },
         dblclick: function(event){
-            var event = event || window.event //cross-IEness
+            event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
         mousedown: function(event){
-            var event = event || window.event //cross-IEness
+            event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
         mousemove: function(event){
-            var event = event || window.event //cross-IEness
+            event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
         mouseout: function(event){
-            var event = event || window.event //cross-IEness
+            event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
         mouseover: function(event){
-            var event = event || window.event //cross-IEness
+            event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
         mouseup: function(event){
-            var event = event || window.event //cross-IEness
+            event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
-
         keydown: function(event) {
-            var event = event || window.event //cross-IEness
+            event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
         keypress: function(event){
-            var event = event || window.event //cross-IEness
+            event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
         keyup: function(event){
-            var event = event || window.event //cross-IEness
+            event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
     };
 })();
 
 (function(){
-    Idea.Slide = function(canvas){
-        this.canvas = canvas; //canvas, this slide belongs to
+
+	var Slide = function(idea){
         this.widgets = []; //list of widgets ordered from deepest to upmost
     };
 
-    Idea.Slide.prototype = {
-        
+    Slide.prototype = {
+      constructor: Slide  
     };
+
+	Object.defineProperty(Idea.prototype, "Slide", {
+		get: function(){
+            var binded_slide = Slide.bind(null, this);
+            binded_slide.fn = Slide.prototype;
+            binded_slide.cons = Slide;
+            return binded_slide;
+		}
+	});
 
 })();
 
 (function(){
-    Idea.Widget = function(slide){
+    var Slidebar = function(idea){
+        this.idea = idea;
+        this._div = document.createElement('div');
+        this._div.style.border = "1px solid rgb(200,200,200)";        
+        this._div.style.display = "inline-block";
+        this._div.style.overflow = "scrollbar";
+        this._div.style.width = "200px";
+    };
+
+    Slidebar.prototype = {constructor: Slidebar};
+
+    Object.defineProperty(Idea.prototype, "Slidebar", {
+        get: function(){
+            return Slidebar.bind(null, this);
+        }
+    });
+
+    var Timeline = function(idea){
+        this.idea = idea;
+        this._div = document.createElement('div');
+        this._div.style.border = "1px solid rgb(200,200,200)";        
+        this._div.style.display = "inline-block";
+        this._div.style.overflow = "scrollbar";
+        this._div.style.width = "200px";
+    };
+
+    Timeline.prototype = {};
+    Timeline.prototype.constructor = Timeline;
+
+    Object.defineProperty(Idea.prototype, "Timeline", {
+        get: function(){
+            return Timeline.bind(null, this);
+        }
+    });
+
+    var Toolbar = function(idea){
+    	this.idea = idea;
+        this._div = document.createElement('div');
+        this._div.style.border = "1px solid rgb(200,200,200)";        
+        this._div.style.display = "inline-block";
+        this._div.style.overflow = "scrollbar";
+        this._div.style.width = "200px";
+    };
+
+    Toolbar.prototype = {};
+    Toolbar.prototype.constructor = Toolbar;
+
+    Object.defineProperty(Idea.prototype, "Toolbar", {
+        get: function(){
+            return Toolbar.bind(null, this);
+        }
+    });
+
+})();
+
+(function(){
+
+    var Widget = function(slide){
         this.slide = slide;
         this.events = {
             click: function(){},
@@ -486,7 +771,8 @@ var Idea = {};
         };
     };
 
-    Idea.Widget.prototype = {
+    Widget.prototype = {
+        constructor: Widget,
         /*
          * this accepts_event() implementation is a dummy template for heir 
          * widgets; override it in widgets, you inherit from Widget
@@ -500,6 +786,16 @@ var Idea = {};
             return false; //here we just return dummy false
         }
     };
+
+    Object.defineProperty(Idea.prototype.Slide.fn, "Widget", {
+        get: function(){
+            var binded_widget = Widget.bind(null, this);
+            binded_widget.fn = Widget.prototype;
+            binded_widget.cons = Widget;
+            return binded_widget;
+        }
+    });
+
 })();
 
 (function(){
@@ -532,7 +828,9 @@ var Idea = {};
      *
      * @memberof Idea
      * @constructor
-     * @param father      Util.Widget, parental to Arrow, or Util.Canvas,
+     * @param owner       Idea.Canvas.Slide or its child widget that contains
+                          the Arrow.
+     * @param father      Util.Widget, parental to Arrow, or Canvas,
      *                    if Arrow doesn't have a parent and is drawn right
                           on the canvas.
      * @param width       width of arrow line, defaults to 1px.
@@ -545,7 +843,7 @@ var Idea = {};
      *                    created and used by default).
      */
 
-    Idea.Arrow = function(father, width, color, base, tip, base_widget, tip_widget){
+    var Arrow = function(owner, father, width, color, base, tip, base_widget, tip_widget){
         if (width === undefined) {widthGetterSetter.call(this, 1);}
         else {widthGetterSetter.call(this, width);}
         if (color === undefined) {colorGetterSetter.call(this, "#AAAAAA");}
@@ -563,7 +861,7 @@ var Idea = {};
         else {tipWidgetGetterSetter.call(this, tip_widget);}
         //draw primitives
         this.father = father;
-        if (this.father instanceof Idea.Canvas) {
+        if (this.father instanceof Idea.prototype.Canvas) {
             this._group = Idea.Util.createSVGElement(this.father._canvas, 'g', {});
             this._drawing = Idea.Util.createSVGElement(this._group, 'line', {
                 "x1": this._base.x,
@@ -580,8 +878,17 @@ var Idea = {};
 
     };
 
-    Idea.Util.extend(Idea.Arrow, Idea.Widget);
-    Idea.Util.addAttrsToPrototype(Idea.Arrow, {
+    Object.defineProperty(Idea.prototype.Slide.fn, "Arrow", {
+        get: function(){
+            var binded_arrow = Arrow.bind(null, this);
+            binded_arrow.fn = Arrow.prototype;
+            binded_arrow.cons = Arrow;
+            return binded_arrow;
+        }
+    });
+
+    Idea.Util.extend(Arrow, Idea.prototype.Slide.fn.Widget);
+    Idea.Util.addAttrsToPrototype(Idea.prototype.Slide.fn.Arrow, {
         width: widthGetterSetter, 
         color: colorGetterSetter,
         base: baseGetterSetter,
@@ -589,7 +896,7 @@ var Idea = {};
         base_widget: baseWidgetGetterSetter,
         tip_widget: tipWidgetGetterSetter,
         accepts_event: function(evt){
-            if (Idea.MOUSE_EVENTS.contains(evt.type)){
+            if (Idea.Util.MOUSE_EVENTS.contains(evt.type)){
                 var coords = this.canvas.canvasCoordsForMouseEvent(evt);
                 if (Idea.Util.pointOnLine(this.base().x, this.base().y, this.tip().x, this.tip().y, this.width(), coords.x, coords.y)) {
                         return true;
@@ -627,16 +934,16 @@ var Idea = {};
      * @param fill         set of fill attributes.
      * @param content
      */
-    Idea.Rectangle = function(father, width, height, rx, ry) { //, stroke, fill, content){
-        if (x === undefined) {throw new Error("x not specified!");}
-        if (y === undefined) {throw new Error("y not specified!");}
+    var Rectangle = function(slide, father, width, height, rx, ry) { //, stroke, fill, content){
+        //if (x === undefined) {throw new Error("x not specified!");}
+        //if (y === undefined) {throw new Error("y not specified!");}
         if (width === undefined) {throw new Error("width not specified");}
         if (height === undefined) {throw new Error("height not specified");}
         if (rx === undefined) {rxGetterSetter.call(this, 0);}
         if (ry === undefined) {ryGetterSetter.call(this, 0);}
         //draw primitives
         this.father = father;
-        if (this.father instanceof Idea.Canvas) {
+        if (this.father instanceof Idea.prototype.Canvas.fn.constructor) {
             this._group = Idea.Util.createSVGElement(this.father._canvas, 'g', {});
             this._drawing = Idea.Util.createSVGElement(this._group, 'rect', {
                 "x1": this._base.x,
@@ -653,8 +960,22 @@ var Idea = {};
 
     };
 
-    Idea.Util.extend(Idea.Arrow, Idea.Widget);
-    Idea.Util.addAttrsToPrototype(Idea.Arrow, {
+    Rectangle.prototype = {
+        constructor: Rectangle
+    };
+
+
+    Object.defineProperty(Idea.prototype.Slide.fn, "Rectangle", {
+        get: function(){
+            var binded_rectangle = Rectangle.bind(null, this);
+            binded_rectangle.fn = Rectangle.prototype;
+            binded_rectangle.cons = Rectangle;
+            return binded_rectangle;
+        }
+    });
+
+    Idea.Util.extend(Rectangle, Idea.prototype.Slide.fn.Widget);
+    Idea.Util.addAttrsToPrototype(Idea.prototype.Slide.fn.Arrow, {
         x: xGetterSetter,
         y: yGetterSetter,
         width: widthGetterSetter,
@@ -663,3 +984,350 @@ var Idea = {};
         ry: ryGetterSetter,
     });
 })();
+
+//http://www.dotuscomus.com/svg/lib/iwsb/innerwinscroll.svg
+//http://www.carto.net/papers/svg/gui/scrollbar/
+//http://www.dotuscomus.com/svg/lib/library.html
+// http://www.dotuscomus.com/svg/lib/iwsb/innerwinscroll.svg
+// http://www.carto.net/papers/svg/gui/scrollbar/
+// http://www.dotuscomus.com/svg/lib/library.html
+// http://www.codedread.com/blog/archives/2005/12/21/how-to-enable-dragging-in-svg/
+
+/**
+ *
+ * Creates a scrollbar inside an <svg> element with given upper-left
+ * coordinates and specified width/height. Either vertical or horizontal.
+ *
+ * @param father {DOMObject} - an <svg> dom node to put the scrollbar into
+ * @param scrollable - an Idea.Scrollable object, scrolled by this scrollbar
+ * @param x
+ * @param y
+ * @param width
+ * @param height
+ * @param vertical {boolean} - if the srollbar is vertical or horizontal
+ */
+
+// to add handler function from html scriptmelement in an inner svg, say
+// onclick='top.handler_name(evt)'
+
+// this is old style of events creation
+var pageBackward = document.createEvent("CustomEvent");
+// see https://developer.mozilla.org/en-US/docs/Web/API/document.createEvent
+pageBackward.initCustomEvent('pageBackward', true, true, {}); //type, bubbles, cancelable, detail
+window.dispatchEvent(pageBackward);
+
+//TODO msie fireEvent
+
+var Scrollbar = function(father, scrollable, x, y, width, height, vertical, sliderStart, sliderSize, scrollSize, pageSize){
+	this.father = father;
+	this.scrollable = scrollable; // TODO: remove this scrollable, instead completely rely on events?
+	this.vertical = vertical;
+
+	if (scrollSize) this.scrollSize = scrollSize;
+	else this.scrollSize = height/25;
+	if (pageSize) this.pageSize = pageSize;
+	else this.pageSize = height/5;
+
+	this.scrollbar = Idea.Util.createSVGElement(father, 'svg', {x: x, y: y, width: width, height: height, viewBox: '0 0 ' + width + ' ' + height, xmlns: Idea.Util.SVGNS});
+
+	this.defs = Idea.Util.createSVGElement(this.scrollbar, 'defs', {});
+	this.arrowTip = Idea.Util.createSVGElement(this.defs, 'marker', {id: "arrowTip", 
+																		  viewBox: "0 0 10 10", 
+																		  refX:"0", refY:"5",
+																		  markerUnits: "strokeWidth",
+																		  markerWidth: "12",
+																		  markerHeight: "9",
+																		  orient: "auto"});
+	Idea.Util.createSVGElement(this.arrowTip, 'path', {d: "M 0 0 L 10 5 L 0 10", fill: "none", stroke:"#c0c0c0", "stroke-linecap":"square", "stroke-linejoin":"round", style:"box-shadow: white;"});
+
+	/*
+	// innerShadow/innerGlow filter implementation takes helluva lot of code. Stolen from:
+	// https://gist.github.com/archana-s/8947217, which seems to be creatively stolen from:
+	// http://www.xanthir.com/b4Yv0
+	this.innerGlow = Idea.Util.createSVGElement(this.defs, 'filter', {id: "innerGlow"});
+	Idea.Util.createSVGElement(this.innerGlow, 'feGaussianBlur', {stdDeviation:"2", result:"blur"});
+	Idea.Util.createSVGElement(this.innerGlow, 'feComposite', {'in2':"SourceAlpha", operator:"arithmetic", k2:"-1", k3:"1", result:"shadow"})
+	Idea.Util.createSVGElement(this.innerGlow, 'feFlood', {"flood-color":"rgb(255, 255, 255)", "flood-opacity":"0.75", result:"color"});
+	Idea.Util.createSVGElement(this.innerGlow, 'feComposite', {'in2':"shadow", operator:"in"});
+	Idea.Util.createSVGElement(this.innerGlow, 'feComposite', {'in2':"SourceGraphic", operator:"over"});
+	*/
+
+	// scrollbar's buttons with arrow labels: the arrow's line is invisible, but the marker at the tip is auto-oriented with lines help
+	this.backwardButton = Idea.Util.createSVGElement(this.scrollbar, 'rect', {x:0, y:0, width:width, height:20, fill:"#a0a0a0"});
+	this.backwardArrow = Idea.Util.createSVGElement(this.scrollbar, 'line', {x1:parseInt(width/2), y1:17, x2:parseInt(width/2), y2:16,  "marker-end":"url(#arrowTip)", "stroke-width":"1", stroke:"#c0c0c0", "stroke-opacity": 0});
+	this.forwardButton = Idea.Util.createSVGElement(this.scrollbar, 'rect', {x:0, y:height-20, width:width, height:20, fill:"#a0a0a0"});
+	this.forwardArrow = Idea.Util.createSVGElement(this.scrollbar, 'line', {x1:parseInt(width/2), y1:height-17, x2:parseInt(width/2), y2: height-16, "marker-end":"url(#arrowTip)", "stroke-width":"1", stroke:"#c0c0c0", "stroke-opacity": 0});
+
+	this.trough = Idea.Util.createSVGElement(this.scrollbar, 'g', {});
+	this.padding = Idea.Util.createSVGElement(this.trough, 'rect', {x:0, y:20, width:width, height:height-40, fill:"#c0c0c0"}); // this is the clickable part of scrollbar, where the slider moves
+	this.slider = Idea.Util.createSVGElement(this.trough, 'rect', {x:0, y:22, width:width, height:40, fill:"#a0a0a0", stroke:"#808080"}); // this is the draggable slider, which scrolls the element, associated with scrollbar
+	// filter:"url(#innerGlow)"
+
+	this.trough.addEventListener("mousedown", this.troughClickHandler.bind(this));
+	this.slider.addEventListener("mousedown", this.sliderMouseDownHandler.bind(this));
+	this.forwardButton.addEventListener("mousedown", this.forwardButtonMouseDownHandler.bind(this));
+	this.backwardButton.addEventListener("mousedown", this.backwardButtonMouseDownHandler.bind(this));
+}
+
+Scrollbar.prototype = {
+	troughClickHandler: function(e){
+		e.preventDefault();
+		e.stopPropagation();
+	},
+	sliderMouseDownHandler: function(e){
+		e.preventDefault();
+		e.stopPropagation();
+
+		var event = Idea.Util.normalizeMouseEvent(e);
+		if (event.which != 1) return; // check that it's left mouse button, else ignore event
+
+		// block scaling
+		// block mousewheel
+
+		// check if it is on slider middle or edge - whether we move slider or resize it
+		if (true) {// if middle
+
+			// attach mouse handlers to window, not document.documentElement (representing <html>)
+			// or mouse events beyond the browser window will be lost
+			this._bindedMouseUpHandler = this.sliderDragMouseUpHandler.bind(this);
+			this._bindedMouseMoveHandler = this.sliderDragMouseMoveHandler.bind(this);
+			window.addEventListener('mouseup', this._bindedMouseUpHandler, false);
+			window.addEventListener('mousemove', this._bindedMouseMoveHandler, false);
+
+			// remember the offset of click on the slider so that we know, where the click occurred
+			var canvasCoords = Idea.Util.windowCoordsToCanvasCoords(event.clientX, event.clientY, this.scrollbar);
+			console.log("canvasCoords.x = " + canvasCoords.x, "canvasCoords.y = " + canvasCoords.y);
+			if (this.vertical) {
+				this.sliderClickOffset = canvasCoords.y - parseInt(this.slider.getAttribute("y")); // WARNING: we assume here that scrollbar wasn't transformed (rotated/shifted etc.)
+			}
+			else {
+				this.sliderClickOffset = canvasCoords.x - parseInt(this.slider.getAttribute("x")); // WARNING: we assume here that scrollbar wasn't transformed (rotated/shifted etc.)
+			}
+		}
+		else { // if edge
+
+		} 
+		console.log("sliderClickOffset = " + this.sliderClickOffset);
+		
+	},
+	sliderDragMouseMoveHandler: function(e){
+		var delta; // difference of slider location relative to click location, all in canvas coordinates
+
+		e.preventDefault();
+
+		var event = Idea.Util.normalizeMouseEvent(e);
+		var canvasCoords = Idea.Util.windowCoordsToCanvasCoords(event.clientX, event.clientY, this.scrollbar);
+		//console.log("canvasCoords in MouseMove = " + JSON.stringify(canvasCoords));
+
+		var sliderX = parseInt(this.slider.getAttribute("x"));
+		var sliderY = parseInt(this.slider.getAttribute("y"));
+		var sliderWidth = parseInt(this.slider.getAttribute("width"));
+		var sliderHeight = parseInt(this.slider.getAttribute("height"));
+		var paddingX = parseInt(this.padding.getAttribute("x"));
+		var paddingY = parseInt(this.padding.getAttribute("y"));
+		var paddingWidth = parseInt(this.padding.getAttribute("width"));
+		var paddingHeight = parseInt(this.padding.getAttribute("height"));
+
+		//console.log("sliderX = " + sliderX, "sliderY = " + sliderY, "sliderWidth = " + sliderWidth, "sliderHeight = " + sliderHeight);
+		//console.log("paddingX = " + paddingX, "paddingY = " + paddingY, "paddingWidth = " + paddingWidth, "paddingHeight = " + paddingHeight);
+
+		// calculate delta
+		if (this.vertical) {
+			delta = canvasCoords.y - (sliderY + this.sliderClickOffset);
+		}
+		else {
+			delta = canvasCoords.x - (sliderX + this.sliderClickOffset);
+		}
+
+		//console.log("delta before boundary = "+  delta);
+		//console.log("delta upper boundary = " + (paddingHeight - (sliderY - paddingY) - sliderHeight), ", lower boundary = " + (paddingY - sliderY));
+
+		// if slider reached the beginning or ending of the trough
+		if (this.vertical){
+			if (delta > paddingHeight - (sliderY - paddingY) - sliderHeight) {
+				delta = paddingHeight - (sliderY - paddingY) - sliderHeight;
+			}
+			else if (delta < paddingY - sliderY) {
+				delta = paddingY - sliderY;
+			}
+
+			this.slider.setAttribute("y", sliderY + delta); // move slider
+
+			// TODO call setViewBox on scrollable
+		}
+		else {
+			if (delta > paddingWidth - (sliderX - paddingX) - sliderWidth) {
+				delta = paddingWidth - (sliderX - paddingX) - sliderWidth;
+			}
+			else if (delta < paddingX - sliderX){
+				delta = paddingX - sliderX;
+			}
+
+			this.slider.setAttribute("x", sliderX + delta); // redraw slider
+			// TODO call setViewBox on scrollable
+		}
+		//console.log("delta = " + delta);
+	},
+	sliderDragMouseUpHandler: function(e){
+		e.preventDefault();
+
+		if (window.removeEventListener){ // modern browsers use removeEventListener
+			window.removeEventListener('mouseup', this._bindedMouseUpHandler);
+			window.removeEventListener('mousemove', this._bindedMouseMoveHandler);
+		}
+		else if (window.detachEvent){ // ie8- use detachEvent
+			window.detachEvent('mouseup', this._bindedMouseUpHandler);
+			window.detachEvent('mousemove', this._bindedMouseMoveHandler);
+		}
+
+		delete this._bindedMouseUpHandler;
+		delete this._bindedMouseMoveHandler;
+		delete this.sliderClickOffset;
+
+		// TODO unblock scaling
+		// TODO unblock mousewheel
+	},
+	sliderResizeHandler: function(e){},
+	scrollableResizeHandler: function(e){},
+	forwardButtonMouseDownHandler: function(e){
+		e.preventDefault();
+		var event = Idea.Util.normalizeMouseEvent(e);
+		if (event.which != 1) return; // check that it's left mouse button, else ignore event
+		// change appearance
+		// block mousewheel
+
+		// button should continue scrolling, while you press the mouse button and keep pointer over it
+		this._bindedForwardButtonMouseUpHandler = this.forwardButtonMouseUpHandler.bind(this);
+		this._bindedForwardButtonMouseEnterHandler = this.forwardButtonMouseEnterHandler.bind(this);
+		this._bindedForwardButtonMouseOutHandler = this.forwardButtonMouseOutHandler.bind(this);
+
+		window.addEventListener('mouseup', this._bindedForwardButtonMouseUpHandler, false);
+		this.forwardButton.addEventListener('mouseenter', this._bindedForwardButtonMouseEnterHandler, false);
+		this.forwardButton.addEventListener('mouseout', this._bindedForwardButtonMouseOutHandler, false);
+
+		this.scrollForward();
+		this.scrollForwardInterval = setInterval(this.scrollForward.bind(this), 200);
+	},
+	forwardButtonMouseOutHandler: function(e){
+		clearInterval(this.scrollForwardInterval);
+		delete this.scrollForwardInterval;
+	},
+	forwardButtonMouseEnterHandler: function(e){
+		this.scrollForwardInterval = setInterval(this.scrollForward.bind(this), 200);
+	},	
+	forwardButtonMouseUpHandler: function(e){
+		clearInterval(this.scrollForwardInterval);
+		delete this.scrollForwardInterval;
+		// unblock mousewheel
+		// change appearance
+
+		if (window.removeEventListener){ // modern browsers use removeEventListener
+			window.removeEventListener('mouseup', this._bindedForwardButtonMouseUpHandler);
+			this.forwardButton.removeEventListener('mouseenter', this._bindedForwardButtonMouseEnterHandler);
+			this.forwardButton.removeEventListener('mouseout', this._bindedForwardButtonMouseOutHandler);
+		}
+		else if (window.detachEvent){ // ie8- use detachEvent
+			window.detachEvent('mouseup', this._bindedForwardButtonMouseUpHandler);
+			this.forwardButton.detachEvent('mouseenter', this._bindedForwardButtonMouseEnterHandler);
+			this.forwardButton.detachEvent('mouseout', this._bindedForwardButtonMouseOutHandler);
+		}
+
+		delete this._bindedForwardButtonMouseUpHandler;
+		delete this._bindedForwardButtonMouseOutHandler;
+		delete this._bindedForwardButtonMouseEnterHandler;
+	},
+	backwardButtonMouseDownHandler: function(e){
+		e.preventDefault();
+		var event = Idea.Util.normalizeMouseEvent(e);
+		if (event.which != 1) return; // check that it's left mouse button, else ignore event
+		// change appearance
+		// block mousewheel
+
+		// button should continue scrolling, while you press the mouse button and keep pointer over it
+		this._bindedBackwardButtonMouseUpHandler = this.backwardButtonMouseUpHandler.bind(this);
+		this._bindedBackwardButtonMouseEnterHandler = this.backwardButtonMouseEnterHandler.bind(this);
+		this._bindedBackwardButtonMouseOutHandler = this.backwardButtonMouseOutHandler.bind(this);
+
+		window.addEventListener('mouseup', this._bindedBackwardButtonMouseUpHandler, false);
+		this.backwardButton.addEventListener('mouseenter', this._bindedBackwardButtonMouseEnterHandler, false);
+		this.backwardButton.addEventListener('mouseout', this._bindedBackwardButtonMouseOutHandler, false);
+
+		this.scrollBackward();
+		this.scrollBackwardInterval = setInterval(this.scrollBackward.bind(this), 200);
+
+	},
+	backwardButtonMouseOutHandler: function(e){
+		clearInterval(this.scrollBackwardInterval);
+		delete this.scrollForwardInterval;
+	},
+	backwardButtonMouseEnterHandler: function(e){
+		this.scrollForwardInterval = setInterval(this.scrollBackward.bind(this), 200);
+	},
+	backwardButtonMouseUpHandler: function(e){
+		clearInterval(this.scrollBackwardInterval);
+		delete this.scrollBackwardInterval;
+		// unblock mousewheel
+		// change appearance
+
+		if (window.removeEventListener){ // modern browsers use removeEventListener
+			window.removeEventListener('mouseup', this._bindedBackwardButtonMouseUpHandler);
+			this.backwardButton.removeEventListener('mouseenter', this._bindedBackwardButtonMouseEnterHandler);
+			this.backwardButton.removeEventListener('mouseout', this._bindedBackwardButtonMouseOutHandler);
+		}
+		else if (window.detachEvent){ // ie8- use detachEvent
+			window.detachEvent('mouseup', this._bindedBackwardButtonMouseUpHandler);
+			this.backwardButton.detachEvent('mouseenter', this._bindedBackwardButtonMouseEnterHandler);
+			this.backwardButton.detachEvent('mouseout', this._bindedBackwardButtonMouseOutHandler);
+		}
+
+		delete this._bindedBackwardButtonMouseUpHandler;
+		delete this._bindedBackwardButtonMouseOutHandler;
+		delete this._bindedBackwardButtonMouseEnterHandler;
+	},
+	pageBackwardEvent: new CustomEvent("pageBackward", {detail: {}, bubbles: true, cancelable: true}),
+	pageForwardEvent: new CustomEvent("pageForward", {detail: {}, bubbles: true, cancelable: true}),
+	scrollForwardEvent: new CustomEvent("scrollForward", {detail: {}, bubbles: true, cancelable: true}),
+	scrollBackwardEvent: new CustomEvent("scrollBackward", {detail: {}, bubbles: true, cancelable: true}),
+	scrollToEvent: new CustomEvent("scrollTo", {detail: {to:0.0-1.0}, bubbles: true, cancelable: true}),
+	extendSliderEvent: new CustomEvent("extendSlide", {detail: {}, bubbles: true, cancelable: true}),
+	contractSliderEvent: new CustomEvent("contractSlider", {detail: {}, bubbles: true, cancelable: true}),
+	// we should also listen to zoom-in/zoom-out events of the scrollable area
+	scrollForward: function(){
+		var sliderX = parseInt(this.slider.getAttribute("x"));
+		var sliderY = parseInt(this.slider.getAttribute("y"));
+		var sliderWidth = parseInt(this.slider.getAttribute("width"));
+		var sliderHeight = parseInt(this.slider.getAttribute("height"));		
+		var paddingX = parseInt(this.padding.getAttribute("x"));
+		var paddingY = parseInt(this.padding.getAttribute("y"));		
+		var paddingWidth = parseInt(this.padding.getAttribute("width"));
+		var paddingHeight = parseInt(this.padding.getAttribute("height"));		
+
+		if (this.vertical){
+			if (sliderY - paddingY + sliderHeight + this.scrollSize > paddingHeight) this.slider.setAttribute("y", paddingY + paddingHeight - sliderHeight);
+			else this.slider.setAttribute("y", sliderY + this.scrollSize); // move slider
+		}
+		else {
+			if (sliderX - paddingX + sliderWidth + this.scrollSize > paddingWidth) this.slider.setAttribute("x", paddingX + paddingWidth - sliderWidth);
+			else this.slider.setAttribute("x", sliderX + this.scrollSize); // move slider
+		}
+	},
+	scrollBackward: function(){
+		var sliderX = parseInt(this.slider.getAttribute("x"));
+		var sliderY = parseInt(this.slider.getAttribute("y"));
+		var paddingX = parseInt(this.padding.getAttribute("x"));
+		var paddingY = parseInt(this.padding.getAttribute("y"));
+
+		if (this.vertical){
+			if (sliderY - paddingY - this.scrollSize < 0) this.slider.setAttribute("y", paddingY);
+			else this.slider.setAttribute("y", sliderY - this.scrollSize); // move slider
+		}
+		else {
+			if (sliderX - paddingX - this.scrollSize < 0) this.slider.setAttribute("x", paddingX);
+			else this.slider.setAttribute("x", sliderX - this.scrollSize); // move slider
+		}
+	},
+	pageForward: function(){},
+	pageBackward: function(){},
+};
+
+Idea.prototype.Scrollbar = Scrollbar;

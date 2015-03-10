@@ -23,16 +23,16 @@
      * @param fill         set of fill attributes.
      * @param content
      */
-    Idea.Rectangle = function(father, width, height, rx, ry) { //, stroke, fill, content){
-        if (x === undefined) {throw new Error("x not specified!");}
-        if (y === undefined) {throw new Error("y not specified!");}
+    var Rectangle = function(slide, father, width, height, rx, ry) { //, stroke, fill, content){
+        //if (x === undefined) {throw new Error("x not specified!");}
+        //if (y === undefined) {throw new Error("y not specified!");}
         if (width === undefined) {throw new Error("width not specified");}
         if (height === undefined) {throw new Error("height not specified");}
         if (rx === undefined) {rxGetterSetter.call(this, 0);}
         if (ry === undefined) {ryGetterSetter.call(this, 0);}
         //draw primitives
         this.father = father;
-        if (this.father instanceof Idea.Canvas) {
+        if (this.father instanceof Idea.prototype.Canvas.fn.constructor) {
             this._group = Idea.Util.createSVGElement(this.father._canvas, 'g', {});
             this._drawing = Idea.Util.createSVGElement(this._group, 'rect', {
                 "x1": this._base.x,
@@ -49,8 +49,22 @@
 
     };
 
-    Idea.Util.extend(Idea.Arrow, Idea.Widget);
-    Idea.Util.addAttrsToPrototype(Idea.Arrow, {
+    Rectangle.prototype = {
+        constructor: Rectangle
+    };
+
+
+    Object.defineProperty(Idea.prototype.Slide.fn, "Rectangle", {
+        get: function(){
+            var binded_rectangle = Rectangle.bind(null, this);
+            binded_rectangle.fn = Rectangle.prototype;
+            binded_rectangle.cons = Rectangle;
+            return binded_rectangle;
+        }
+    });
+
+    Idea.Util.extend(Rectangle, Idea.prototype.Slide.fn.Widget);
+    Idea.Util.addAttrsToPrototype(Idea.prototype.Slide.fn.Arrow, {
         x: xGetterSetter,
         y: yGetterSetter,
         width: widthGetterSetter,

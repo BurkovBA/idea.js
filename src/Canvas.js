@@ -1,5 +1,5 @@
 /*
- * Canvas is a huge, almost infinite flat area, and user looks
+ * Canvas is an infinite (well, almost) flat area, and user looks
  * at it through a finite viewport, can zoom in and out. In practice,
  * these "almost infinite" width and height of canvas are defined
  * as constants in Idea.Conf.
@@ -25,7 +25,8 @@
      *
      */
 
-    Idea.Canvas = function(width, height){
+    Idea.prototype.Canvas = function(idea, width, height){
+        var x, y;
         //create a div container for our canvas
         this._div = document.createElement('div');
         this._div.style.border = "1px solid rgb(200,200,200)";
@@ -43,17 +44,15 @@
         //check if width/height is set and define the size of viewport
         var viewbox;
         if (!((width === undefined) || (height === undefined))) {
-            var x = Idea.Conf.canvas_width/2;
-            var y = Idea.Conf.canvas/2 - height;
-            var width = width;
-            var height = height;
+            x = Idea.Conf.canvas_width/2;
+            y = Idea.Conf.canvas/2 - height;
             viewbox =  "" + x + " " + y + " " + width + " " + height;
         }
         else {
-            var x = Idea.Conf.canvas_width/2;
-            var y = Idea.Conf.canvas_height/2 - Idea.Conf.default_viewport_width;
-            var width = Idea.Conf.default_viewport_width;
-            var height = Idea.Conf.default_viewport_height;
+            x = Idea.Conf.canvas_width/2;
+            y = Idea.Conf.canvas_height/2 - Idea.Conf.default_viewport_width;
+            width = Idea.Conf.default_viewport_width;
+            height = Idea.Conf.default_viewport_height;
             viewbox =  "" + x + " " + y + " " + width + " " + height;
         }
         alert(viewbox);
@@ -69,30 +68,20 @@
         this._grip.style.background = "#AAAAAA";
         this._grip.style.float = "right";
         this._div.appendChild(this._grip);
-        //to fight incompatibilitiy of mouse button codes between IE and browsers,
-        //we use tricks with event.which and event.button, for explanation see:
-        //http://www.martinrinehart.com/early-sites/mrwebsite_old/examples/cross_browser_mouse_events.html
+
         this._grip.onmousedown = function(event){
-            var event = event || window.event;
-            var which = event.which ? event.which :
-                event.button === 1 ? 1 :
-                event.button === 2 ? 3 : 
-                event.button === 4 ? 2 : 1;
-            if (which == 1) {
+            event = Idea.Util.normalizeMouseEvent(event);
+            if (event.which == 1) {
                 this._grip_pressed = true;
-                this._grip_x = event.x || event.clientX;
-                this._grip_y = event.y || event.clientY;
+                this._grip_x = event.clientX;
+                this._grip_y = event.clientY;
                 //add event listeners to <html> (i.e. document.documentElement)
                 //to respond to mousemove and mouseup if they're outside _grip.
                 //idea taken from here:
                 //http://stackoverflow.com/questions/8960193/how-to-make-html-element-resizable-using-pure-javascript
                 var Up = function(event){
-                    var event = event || window.event;
-                    var which = event.which ? event.which :
-                    event.button === 1 ? 1 :
-                    event.button === 2 ? 3 : 
-                    event.button === 4 ? 2 : 1;
-                    if (which == 1) {
+                    event = Idea.Util.normalizeMouseEvent(event)
+                    if (event.which == 1) {
                         this._grip_pressed = false;
                         document.documentElement.removeEventListener('mousemove', Move, false);
                         document.documentElement.removeEventListener('mouseup', Up, false);
@@ -100,14 +89,12 @@
                 }.bind(this);
                 
                 var Move = function(event) {
-                    var event = event || window.event;
-                    event.x = event.x || event.clientX;
-                    event.y = event.y || event.clientY;
-                    if (this._grip_pressed == true){
-                        this.width(parseInt(this.width()) + event.x - this._grip_x);
-                        this.height(parseInt(this.height()) + event.y - this._grip_y);
-                        this._grip_x = event.x;
-                        this._grip_y = event.y;
+                    event = Idea.Util.normalizeMouseEvent(event)
+                    if (this._grip_pressed === true){
+                        this.width(parseInt(this.width()) + event.clientX - this._grip_x);
+                        this.height(parseInt(this.height()) + event.clientY - this._grip_y);
+                        this._grip_x = event.clientX;
+                        this._grip_y = event.clientY;
                     }
                 }.bind(this);
 
@@ -116,7 +103,7 @@
             }
         }.bind(this);
         this._grip.onmouseover = function(event){
-            var event = event || window.event;
+            event = Idea.Util.normalizeMouseEvent(event);
             this.style.cursor = "nw-resize";
         };
         //create clear element to clear floats
@@ -135,14 +122,11 @@
         this.rect.style.fill = "none";
         //TODO REMOVE THIS IT'S A TEST
 
-        this.slides = [new Idea.Slide(this)]; //array of slides in order from 1st to last
-        this._slide = this.slides[0];
-        this._mode = "view"; // "view" or "edit" mode
 
         // http://en.wikipedia.org/wiki/HTML_attribute - list of events
 
         // Note: we call bind() on event handlers to have "this" refer
-        // to our Idea.Canvas object, not to this._canvas, as it would've
+        // to our Idea.prototype.Canvas object, not to this._canvas, as it would've
         // been in event handler context.
         this._canvas.onclick = this.click.bind(this);
         this._canvas.ondblclick = this.dblclick.bind(this);
@@ -158,7 +142,7 @@
 
     };
 
-    Idea.Canvas.prototype = {
+    Idea.prototype.Canvas.prototype = {
         slide: function(slide){
             if (slide === undefined) {return this._slide;}
             else {
@@ -187,7 +171,7 @@
 
         //events-related code
         _propagateEventToWidgets: function(evt){
-            for (i=this.slide().widgets.length-1; i >= 0; i++) {
+            for (var i=this.slide().widgets.length-1; i >= 0; i++) {
                 var widget = this.slide().widgets[i];
                 if (widget.accepts_event(evt)){
                     break;
@@ -202,44 +186,43 @@
             };
         },
         click: function(event){
-            var event = event || window.event // "|| window.event" for  cross-IEness
+            event = event || window.event // "|| window.event" for  cross-IEness
             this._propagateEventToWidgets(event);
         },
         dblclick: function(event){
-            var event = event || window.event //cross-IEness
+            event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
         mousedown: function(event){
-            var event = event || window.event //cross-IEness
+            event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
         mousemove: function(event){
-            var event = event || window.event //cross-IEness
+            event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
         mouseout: function(event){
-            var event = event || window.event //cross-IEness
+            event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
         mouseover: function(event){
-            var event = event || window.event //cross-IEness
+            event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
         mouseup: function(event){
-            var event = event || window.event //cross-IEness
+            event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
-
         keydown: function(event) {
-            var event = event || window.event //cross-IEness
+            event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
         keypress: function(event){
-            var event = event || window.event //cross-IEness
+            event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
         keyup: function(event){
-            var event = event || window.event //cross-IEness
+            event = event || window.event //cross-IEness
             this._propagateEventToWidgets(event);
         },
     };

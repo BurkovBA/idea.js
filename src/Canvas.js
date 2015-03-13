@@ -27,7 +27,7 @@
      */
 
     Idea.prototype.Canvas = function(idea, width, height){
-        //create the canvas itself, set its attributes and insert it into div    
+        // create the canvas itself, set its attributes and insert it into div    
         this._canvas = document.createElementNS(Idea.Util.SVGNS, 'svg');
 
         //this._canvas.setAttribute("version", "1.1")
@@ -35,7 +35,7 @@
         this.width(Idea.Conf.defaultViewportWidth);
         this.height(Idea.Conf.defaultViewportHeight);
 
-        //check if width/height is set and define the size and location of viewBox
+        // check if width/height is set and define the size and location of viewBox
         var x = 0;
         var y = 0;        
         if ((width === undefined) || (height === undefined)) {
@@ -44,7 +44,25 @@
         }
         this.viewBox({x:x, y:y, width:width, height:height});
 
-        //TODO REMOVE THIS IT'S A TEST
+        // create defs and grid, stolen from:
+        // http://stackoverflow.com/questions/14208673/how-to-draw-grid-using-html5-and-canvas-or-svg
+        this.defs = Idea.Util.createSVGElement(this._canvas, 'defs', {});
+        this.smallGridPattern = Idea.Util.createSVGElement(this.defs, 'pattern', {id:"smallGridPattern",
+                                                                                  width: "8",
+                                                                                  height: "8",
+                                                                                  patternUnits: "userSpaceOnUse",
+                                                                                  });
+        Idea.Util.createSVGElement(this.smallGridPattern, 'path', {d:"M 8 0 L 0 0 0 8", fill:"none", stroke:"#c0c0c0", "stroke-width":"0.5"});
+        this.gridPattern = Idea.Util.createSVGElement(this.defs, 'pattern', {id:"gridPattern",
+                                                                       width: "80",
+                                                                       height: "80",
+                                                                       patternUnits: "userSpaceOnUse"});
+        Idea.Util.createSVGElement(this.gridPattern, 'rect', {width:"80", height:"80", fill:"url(#smallGridPattern)"});
+        Idea.Util.createSVGElement(this.gridPattern, 'path', {d:"M 80 0 L 0 0 0 80", fill:"none", stroke: "#c0c0c0", "stroke-width": "1"});
+
+        this.grid = Idea.Util.createSVGElement(this._canvas, 'rect', {width:"100%", height: "100%", fill:"url(#gridPattern)"});
+
+        // TODO REMOVE THIS IT'S A TEST
         this.rect = Idea.Util.createSVGElement(this._canvas, 'rect', {
             "x": 10,
             "y": 10,
@@ -53,7 +71,7 @@
         });
         this.rect.style.stroke = "black";
         this.rect.style.fill = "none";
-        //TODO REMOVE THIS IT'S A TEST
+        // TODO REMOVE THIS IT'S A TEST
 
         // http://en.wikipedia.org/wiki/HTML_attribute - list of events
     };

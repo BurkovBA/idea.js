@@ -207,14 +207,14 @@
             var canvasLeftOffset = x - canvasRectangle.left; // in window coordinates
 
             var viewbox = canvas.getAttributeNS(null, 'viewBox');
-            var viewbox_dimensions = viewbox.split(" ");
-            viewbox_dimensions.forEach(function(element, index, array){array[index] = parseInt(element);})
+            var viewboxDimensions = viewbox.split(" ");
+            viewboxDimensions.forEach(function(element, index, array){array[index] = parseInt(element);})
 
-            var canvasToUserXRatio = viewbox_dimensions[2] / canvasRectangle.width;
-            var canvasToUserYRatio = viewbox_dimensions[3] / canvasRectangle.height;
+            var canvasToUserXRatio = viewboxDimensions[2] / canvasRectangle.width;
+            var canvasToUserYRatio = viewboxDimensions[3] / canvasRectangle.height;
 
-            var canvasX = parseInt(viewbox_dimensions[0] + canvasToUserXRatio * canvasLeftOffset);
-            var canvasY = parseInt(viewbox_dimensions[1] + canvasToUserYRatio * canvasTopOffset);
+            var canvasX = parseInt(viewboxDimensions[0] + canvasToUserXRatio * canvasLeftOffset);
+            var canvasY = parseInt(viewboxDimensions[1] + canvasToUserYRatio * canvasTopOffset);
             var canvasCoords = {x: canvasX, y: canvasY};
             return canvasCoords;
         },
@@ -238,46 +238,46 @@
 
         /*
          * Factory function that returns getterSetter function, which,
-         * as getter, returns value of arg_name or, as setter, validates
+         * as getter, returns value of argName or, as setter, validates
          * input value, checking, if it's an unsigned integer.
          * 
          * @function
          * @memberof Idea.Util
-         * @param arg_name  name of argument to get/set with this method.
+         * @param argName  name of argument to get/set with this method.
          */
 
-        uintGetterSetter: function(arg_name){
+        uintGetterSetter: function(argName){
             return function(arg){
-                if (arg === undefined) {return this["_"+arg_name];}
+                if (arg === undefined) {return this["_"+argName];}
                 else {
-                    if (Idea.Util.UINTREGEX.test(arg)) {
-                        this["_"+arg_name] = arg;
-                    }
-                    else {
-                        throw new Error(arg_name + " should be unsigned int, got: '" + arg + "'!");
-                    }
+                    Idea.Util.uintValidator(arg, argName);
+                    this["_"+argName] = arg;
                 }
             };
         },
 
+        uintValidator: function(arg, argName){
+            if (!Idea.Util.UINTREGEX.test(arg)) throw new Error(argName + " should be unsigned int, got: '" + arg + "'!");
+        },
+
         /*
          * Factory function that returns getterSetter function, which,
-         * as getter, returns value of arg_name or, as setter, validates
+         * as getter, returns value of argName or, as setter, validates
          * input value, checking, if it's a color literal.
          * 
          * @function
          * @memberof Idea.Util
-         * @param arg_name  name of argument to get/set with this method.
+         * @param argName  name of argument to get/set with this method.
          */
 
-        colorGetterSetter: function(arg_name){
+        colorGetterSetter: function(argName){
             //TODO!!! COLOR literals, e.g. rgb, rgba or trivial color names
             return function(arg){
-                if (arg === undefined) {return this["_"+arg_name];}
+                if (arg === undefined) {return this["_"+argName];}
                 else {
-                    if (Idea.Util.isHexColor(arg)){ this["_"+arg_name] = arg;}
+                    if (Idea.Util.isHexColor(arg)){ this["_"+argName] = arg;}
                     else {
-                        throw new Error(arg_name + " should be a valid color string, e.g #ACDC66, got: '" + arg + "'!");
+                        throw new Error(argName + " should be a valid color string, e.g #ACDC66, got: '" + arg + "'!");
                     }
                 }
             };
@@ -285,20 +285,20 @@
 
         /*
          * Factory function that returns getterSetter function, which,
-         * as getter, returns value of arg_name or, as setter, validates
+         * as getter, returns value of argName or, as setter, validates
          * input value, checking, if it's a Util.Widget subclass.
          * 
          * @function
          * @memberof Idea.Util
-         * @param arg_name  name of argument to get/set with this method.
+         * @param argName  name of argument to get/set with this method.
          */
 
-        widgetGetterSetter: function(arg_name){
+        widgetGetterSetter: function(argName){
             return function(arg){
-                if (arg === undefined) {return this["_"+arg_name];}
+                if (arg === undefined) {return this["_"+argName];}
                 else {
-                    if (arg instanceof Idea.prototype.Widget) {this["_"+arg_name] = arg;}
-                    else {throw new Error(arg_name + "should be a Util.prototype.Widget subclass, got:'" + typeof arg + "'!");}
+                    if (arg instanceof Idea.prototype.Widget) {this["_"+argName] = arg;}
+                    else {throw new Error(argName + "should be a Util.prototype.Widget subclass, got:'" + typeof arg + "'!");}
                 }
             };
         }

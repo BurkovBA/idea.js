@@ -37,10 +37,11 @@
     var Toolbar = function(idea){
     	this.idea = idea;
         this._div = document.createElement('div');
-        this._div.style.border = "1px solid rgb(200,200,200)";        
         this._div.style.display = "inline-block";
         this._div.style.overflow = "scrollbar";
-        this._div.style.width = "200px";
+        this._div.style.background = "rgb(200, 200, 200) no-repeat";
+        this._div.style.width = "800px";
+        this._div.style.height = "800px";
     };
 
     Toolbar.prototype = {};

@@ -68,23 +68,78 @@
  */
 
 Idea = function(){
+        // create a div container for our canvas
+        this._div = document.createElement('div');
+        this._div.style.border = "1px solid rgb(200,200,200)";
+        this._div.style.display = "inline-block";
+        //document.body.appendChild(this._div);
 
         this.slides = [new this.Slide()]; // slides in correct order
         this._slide = this.slides[0]; // currently active slide
         this._mode = "view"; // "view" or "edit" mode
 
         this.gui = {};
-        this._div = document.createElement('div');
-        this._topdiv = document.createElement('div');
-        this.gui.slidebar = new this.Slidebar();
-        this._topdiv.appendChild(this.gui.slidebar._div);
+
+        this.svg = Idea.Util.createSVGElement(this._div, 'svg', {width: Idea.Conf.defaultViewportWidth, height: Idea.Conf.defaultViewportHeight});
         this.canvas = new this.Canvas(this);
-        this._topdiv.appendChild(this.canvas._div);
+        this.svg.appendChild(this.canvas._canvas);
+        this._vScrollbar = new this.Scrollbar(this.svg, this.canvas, this.svg.getAttribute("width")-40, 0, 40, this.svg.getAttribute("height")-40, true);
+        this._hScrollbar = new this.Scrollbar(this.svg, this.canvas, 0, this.svg.getAttribute("height")-40, this.svg.getAttribute("width")-40, 40, false);
+        this._div.appendChild(this.svg);
+
         this.gui.tools = new this.Toolbar();
-        this._topdiv.appendChild(this.gui.tools._div);
-        this._div.appendChild(this._topdiv);
-        this.gui.timeline = new this.Timeline();
-        this._div.appendChild(this.gui.timeline._div);
+        this._div.appendChild(this.gui.tools._div);
+
+        // create resize grip
+        this._grip = document.createElement('div');
+        this._grip.style.width = 10;
+        this._grip.style.height = 10;
+        this._grip.style.display = "inline-block";
+        this._grip.style.background = "#AAAAAA";
+        this._grip.style.float = "right";
+        this._div.appendChild(this._grip);
+
+        this._grip.onmousedown = function(event){
+            event = Idea.Util.normalizeMouseEvent(event);
+            if (event.which == 1) {
+                this._grip_pressed = true;
+                this._grip_x = event.clientX;
+                this._grip_y = event.clientY;
+                // add event listeners to <html> (i.e. document.documentElement)
+                // to respond to mousemove and mouseup if they're outside _grip.
+                // idea taken from here:
+                // http://stackoverflow.com/questions/8960193/how-to-make-html-element-resizable-using-pure-javascript
+                var Up = function(event){
+                    event = Idea.Util.normalizeMouseEvent(event)
+                    if (event.which == 1) {
+                        this._grip_pressed = false;
+                        document.documentElement.removeEventListener('mousemove', Move, false);
+                        document.documentElement.removeEventListener('mouseup', Up, false);
+                    }
+                }.bind(this);
+                
+                var Move = function(event) {
+                    event = Idea.Util.normalizeMouseEvent(event)
+                    if (this._grip_pressed === true){
+                        this.width(parseInt(this.width()) + event.clientX - this._grip_x);
+                        this.height(parseInt(this.height()) + event.clientY - this._grip_y);
+                        this._grip_x = event.clientX;
+                        this._grip_y = event.clientY;
+                    }
+                }.bind(this);
+
+                document.documentElement.addEventListener('mouseup', Up, false);
+                document.documentElement.addEventListener('mousemove', Move, false);
+            }
+        }.bind(this);
+        this._grip.onmouseover = function(event){
+            event = Idea.Util.normalizeMouseEvent(event);
+            this.style.cursor = "nw-resize";
+        };
+        //create clear element to clear floats
+        this._clear = document.createElement('div');
+        this._grip.style.clear = "both";
+        this._div.appendChild(this._clear);        
 };
 
 /*
@@ -103,6 +158,21 @@ Idea.Util = {};
 Idea.Conf = {};
 
 Idea.prototype = {
+    mode: function(mode){
+        if (mode === undefined) {return this._mode;}
+        else {
+            if (mode == "view" || mode == "edit") {this._mode = mode;}
+            else {throw new Error("Wrong mode value: '" + mode + "', should be in ['view', 'edit']!");}
+        }
+    },
+
+    slide: function(slide){
+        if (slide === undefined) {return this._slide;}
+        else {
+            if (this.slides.contains(slide)) {this._slide = slide;}
+            else {throw new Error("Slide not in slides!");}
+        }
+    },
 
     insertSlide: function(index, slide){
         // create and insert slide preview to the slidebar
@@ -117,6 +187,7 @@ Idea.prototype = {
         }
         this.splice(index, 0, slide);
     },
+
     appendSlide: function(slide){
         this.insertSlide(this.length, slide);
     }
@@ -127,10 +198,10 @@ Idea.prototype.constructor = Idea;
 
 (function(){
     Idea.Conf = {
-        canvas_width: 4096,
-        canvas_height: 4096,
-        default_viewport_width: 800,
-        default_viewport_height: 800,
+        defaultViewboxWidth: 4096, // this is in canvas coordinates
+        defaultViewboxHeight: 4096, // this is in canvas coordinates
+        defaultViewportWidth: 800, // this is in browser window coordinates
+        defaultViewportHeight: 800, // this is in browser window coordinates
         framerate: 25
     };
 })();
@@ -344,14 +415,14 @@ Idea.prototype.constructor = Idea;
             var canvasLeftOffset = x - canvasRectangle.left; // in window coordinates
 
             var viewbox = canvas.getAttributeNS(null, 'viewBox');
-            var viewbox_dimensions = viewbox.split(" ");
-            viewbox_dimensions.forEach(function(element, index, array){array[index] = parseInt(element);})
+            var viewboxDimensions = viewbox.split(" ");
+            viewboxDimensions.forEach(function(element, index, array){array[index] = parseInt(element);})
 
-            var canvasToUserXRatio = viewbox_dimensions[2] / canvasRectangle.width;
-            var canvasToUserYRatio = viewbox_dimensions[3] / canvasRectangle.height;
+            var canvasToUserXRatio = viewboxDimensions[2] / canvasRectangle.width;
+            var canvasToUserYRatio = viewboxDimensions[3] / canvasRectangle.height;
 
-            var canvasX = parseInt(viewbox_dimensions[0] + canvasToUserXRatio * canvasLeftOffset);
-            var canvasY = parseInt(viewbox_dimensions[1] + canvasToUserYRatio * canvasTopOffset);
+            var canvasX = parseInt(viewboxDimensions[0] + canvasToUserXRatio * canvasLeftOffset);
+            var canvasY = parseInt(viewboxDimensions[1] + canvasToUserYRatio * canvasTopOffset);
             var canvasCoords = {x: canvasX, y: canvasY};
             return canvasCoords;
         },
@@ -375,46 +446,46 @@ Idea.prototype.constructor = Idea;
 
         /*
          * Factory function that returns getterSetter function, which,
-         * as getter, returns value of arg_name or, as setter, validates
+         * as getter, returns value of argName or, as setter, validates
          * input value, checking, if it's an unsigned integer.
          * 
          * @function
          * @memberof Idea.Util
-         * @param arg_name  name of argument to get/set with this method.
+         * @param argName  name of argument to get/set with this method.
          */
 
-        uintGetterSetter: function(arg_name){
+        uintGetterSetter: function(argName){
             return function(arg){
-                if (arg === undefined) {return this["_"+arg_name];}
+                if (arg === undefined) {return this["_"+argName];}
                 else {
-                    if (Idea.Util.UINTREGEX.test(arg)) {
-                        this["_"+arg_name] = arg;
-                    }
-                    else {
-                        throw new Error(arg_name + " should be unsigned int, got: '" + arg + "'!");
-                    }
+                    Idea.Util.uintValidator(arg, argName);
+                    this["_"+argName] = arg;
                 }
             };
         },
 
+        uintValidator: function(arg, argName){
+            if (!Idea.Util.UINTREGEX.test(arg)) throw new Error(argName + " should be unsigned int, got: '" + arg + "'!");
+        },
+
         /*
          * Factory function that returns getterSetter function, which,
-         * as getter, returns value of arg_name or, as setter, validates
+         * as getter, returns value of argName or, as setter, validates
          * input value, checking, if it's a color literal.
          * 
          * @function
          * @memberof Idea.Util
-         * @param arg_name  name of argument to get/set with this method.
+         * @param argName  name of argument to get/set with this method.
          */
 
-        colorGetterSetter: function(arg_name){
+        colorGetterSetter: function(argName){
             //TODO!!! COLOR literals, e.g. rgb, rgba or trivial color names
             return function(arg){
-                if (arg === undefined) {return this["_"+arg_name];}
+                if (arg === undefined) {return this["_"+argName];}
                 else {
-                    if (Idea.Util.isHexColor(arg)){ this["_"+arg_name] = arg;}
+                    if (Idea.Util.isHexColor(arg)){ this["_"+argName] = arg;}
                     else {
-                        throw new Error(arg_name + " should be a valid color string, e.g #ACDC66, got: '" + arg + "'!");
+                        throw new Error(argName + " should be a valid color string, e.g #ACDC66, got: '" + arg + "'!");
                     }
                 }
             };
@@ -422,20 +493,20 @@ Idea.prototype.constructor = Idea;
 
         /*
          * Factory function that returns getterSetter function, which,
-         * as getter, returns value of arg_name or, as setter, validates
+         * as getter, returns value of argName or, as setter, validates
          * input value, checking, if it's a Util.Widget subclass.
          * 
          * @function
          * @memberof Idea.Util
-         * @param arg_name  name of argument to get/set with this method.
+         * @param argName  name of argument to get/set with this method.
          */
 
-        widgetGetterSetter: function(arg_name){
+        widgetGetterSetter: function(argName){
             return function(arg){
-                if (arg === undefined) {return this["_"+arg_name];}
+                if (arg === undefined) {return this["_"+argName];}
                 else {
-                    if (arg instanceof Idea.prototype.Widget) {this["_"+arg_name] = arg;}
-                    else {throw new Error(arg_name + "should be a Util.prototype.Widget subclass, got:'" + typeof arg + "'!");}
+                    if (arg instanceof Idea.prototype.Widget) {this["_"+argName] = arg;}
+                    else {throw new Error(argName + "should be a Util.prototype.Widget subclass, got:'" + typeof arg + "'!");}
                 }
             };
         }
@@ -444,14 +515,15 @@ Idea.prototype.constructor = Idea;
 })();
 
 /*
- * Canvas is an infinite (well, almost) flat area, and user looks
- * at it through a finite viewport, can zoom in and out. In practice,
- * these "almost infinite" width and height of canvas are defined
- * as constants in Idea.Conf.
+ * Canvas is an infinite flat area, and user looks
+ * at it through a finite viewport (part of browser window), while
+ * the part of canvas under the viewport is called viewBox.
+ * Viewport can zoom in and out. Its size is specified as an input
+ * parameter to idea.Canvas.
  *
  * ........  <-- the big thing, denoted with . is the whole canvas
  * ........
- * ..---- <-- the small thing is the viewport
+ * ..---- <-- the small thing is the viewBox
  * ..|..|..
  * ..----..
  * ........
@@ -471,90 +543,22 @@ Idea.prototype.constructor = Idea;
      */
 
     Idea.prototype.Canvas = function(idea, width, height){
-        var x, y;
-        //create a div container for our canvas
-        this._div = document.createElement('div');
-        this._div.style.border = "1px solid rgb(200,200,200)";
-        this._div.style.display = "inline-block";
-        document.body.appendChild(this._div);
-
         //create the canvas itself, set its attributes and insert it into div    
         this._canvas = document.createElementNS(Idea.Util.SVGNS, 'svg');
 
         //this._canvas.setAttribute("version", "1.1")
         //this._canvas.setAttribute("xmlns", Idea.Util.SVGNS);
-        this._canvas.setAttribute("width", Idea.Conf.default_viewport_width);
-        this._canvas.setAttribute("height", Idea.Conf.default_viewport_height);
+        this.width(Idea.Conf.defaultViewportWidth);
+        this.height(Idea.Conf.defaultViewportHeight);
 
-        //check if width/height is set and define the size of viewport
-        var viewbox;
-        if (!((width === undefined) || (height === undefined))) {
-            x = Idea.Conf.canvas_width/2;
-            y = Idea.Conf.canvas/2 - height;
-            viewbox =  "" + x + " " + y + " " + width + " " + height;
+        //check if width/height is set and define the size and location of viewBox
+        var x = 0;
+        var y = 0;        
+        if ((width === undefined) || (height === undefined)) {
+            width = Idea.Conf.defaultViewportWidth;
+            height = Idea.Conf.defaultViewportHeight;
         }
-        else {
-            x = Idea.Conf.canvas_width/2;
-            y = Idea.Conf.canvas_height/2 - Idea.Conf.default_viewport_width;
-            width = Idea.Conf.default_viewport_width;
-            height = Idea.Conf.default_viewport_height;
-            viewbox =  "" + x + " " + y + " " + width + " " + height;
-        }
-        alert(viewbox);
-        this._canvas.setAttributeNS(Idea.Util.SVGNS, "viewBox", viewbox);
-
-        this._div.appendChild(this._canvas);
-
-        //create resize grip
-        this._grip = document.createElement('div');
-        this._grip.style.width = 10;
-        this._grip.style.height = 10;
-        this._grip.style.display = "inline-block";
-        this._grip.style.background = "#AAAAAA";
-        this._grip.style.float = "right";
-        this._div.appendChild(this._grip);
-
-        this._grip.onmousedown = function(event){
-            event = Idea.Util.normalizeMouseEvent(event);
-            if (event.which == 1) {
-                this._grip_pressed = true;
-                this._grip_x = event.clientX;
-                this._grip_y = event.clientY;
-                //add event listeners to <html> (i.e. document.documentElement)
-                //to respond to mousemove and mouseup if they're outside _grip.
-                //idea taken from here:
-                //http://stackoverflow.com/questions/8960193/how-to-make-html-element-resizable-using-pure-javascript
-                var Up = function(event){
-                    event = Idea.Util.normalizeMouseEvent(event)
-                    if (event.which == 1) {
-                        this._grip_pressed = false;
-                        document.documentElement.removeEventListener('mousemove', Move, false);
-                        document.documentElement.removeEventListener('mouseup', Up, false);
-                    }
-                }.bind(this);
-                
-                var Move = function(event) {
-                    event = Idea.Util.normalizeMouseEvent(event)
-                    if (this._grip_pressed === true){
-                        this.width(parseInt(this.width()) + event.clientX - this._grip_x);
-                        this.height(parseInt(this.height()) + event.clientY - this._grip_y);
-                        this._grip_x = event.clientX;
-                        this._grip_y = event.clientY;
-                    }
-                }.bind(this);
-
-                document.documentElement.addEventListener('mouseup', Up, false);
-                document.documentElement.addEventListener('mousemove', Move, false);
-            }
-        }.bind(this);
-        this._grip.onmouseover = function(event){
-            event = Idea.Util.normalizeMouseEvent(event);
-            this.style.cursor = "nw-resize";
-        };
-        //create clear element to clear floats
-        this._clear = document.createElement('div');
-        this._grip.style.clear = "both";
-        this._div.appendChild(this._clear);
+        this.viewBox({x:x, y:y, width:width, height:height});
 
         //TODO REMOVE THIS IT'S A TEST
         this.rect = Idea.Util.createSVGElement(this._canvas, 'rect', {
@@ -567,109 +571,35 @@ Idea.prototype.constructor = Idea;
         this.rect.style.fill = "none";
         //TODO REMOVE THIS IT'S A TEST
 
-
         // http://en.wikipedia.org/wiki/HTML_attribute - list of events
-
-        // Note: we call bind() on event handlers to have "this" refer
-        // to our Idea.prototype.Canvas object, not to this._canvas, as it would've
-        // been in event handler context.
-        this._canvas.onclick = this.click.bind(this);
-        this._canvas.ondblclick = this.dblclick.bind(this);
-        this._canvas.onmousedown = this.mousedown.bind(this);
-        this._canvas.onmousemove = this.mousemove.bind(this);
-        this._canvas.onmouseout = this.mouseout.bind(this);
-        this._canvas.onmouseover = this.mouseover.bind(this);
-        this._canvas.onmouseup = this.mouseup.bind(this);
-
-        this._canvas.onkeydown = this.keydown.bind(this);
-        this._canvas.onkeypress = this.keypress.bind(this);
-        this._canvas.onkeyup = this.keyup.bind(this);
-
     };
 
     Idea.prototype.Canvas.prototype = {
-        slide: function(slide){
-            if (slide === undefined) {return this._slide;}
-            else {
-                if (this.slides.contains(slide)) {this._slide = slide;}
-                else {throw new Error("Slide not in slides!");}
-            }
-        },
-
-        mode: function(mode){
-            if (mode === undefined) {return this._mode;}
-            else {
-                if (mode == "view" || mode == "edit") {this._mode = mode;}
-                else {throw new Error("Wrong mode value: '" + mode + "', should be in ['view', 'edit']!");}
-            }
-        },
-
         width: function(width){
-            if (width === undefined){return this._canvas.getAttribute("width");}
-            else {this._canvas.setAttribute("width", width);}
+            if (width === undefined) return this._canvas.getAttribute("width");
+            else this._canvas.setAttribute("width", width);
         },
 
         height: function(height){
-            if (height === undefined){return this._canvas.getAttribute("height");}
-            else {this._canvas.setAttribute("height", height);}
+            if (height === undefined) return this._canvas.getAttribute("height");
+            else this._canvas.setAttribute("height", height);
         },
 
-        //events-related code
-        _propagateEventToWidgets: function(evt){
-            for (var i=this.slide().widgets.length-1; i >= 0; i++) {
-                var widget = this.slide().widgets[i];
-                if (widget.accepts_event(evt)){
-                    break;
-                }
+        viewBox: function(viewBox){
+            var dimensions, viewBoxAttribute;
+            if (viewBox === undefined){
+                viewBoxAttribute = this._canvas.getAttributeNS(null, 'viewBox');
+                dimensions = viewBox.split(" ");
+                dimensions.forEach(function(element, index, array){array[index] = parseInt(element);});
+                viewBox = {x: dimensions[0], y: dimensions[1], width: dimensions[2], height: dimensions[3]};
+                return viewBox;
             }
-        },
-        canvasCoordsForMouseEvent: function(evt){
-            var rect = this._canvas.getBoundingClientRect();
-            return {
-                x: evt.x - rect.left,
-                y: evt.y - rect.top
-            };
-        },
-        click: function(event){
-            event = event || window.event // "|| window.event" for  cross-IEness
-            this._propagateEventToWidgets(event);
-        },
-        dblclick: function(event){
-            event = event || window.event //cross-IEness
-            this._propagateEventToWidgets(event);
-        },
-        mousedown: function(event){
-            event = event || window.event //cross-IEness
-            this._propagateEventToWidgets(event);
-        },
-        mousemove: function(event){
-            event = event || window.event //cross-IEness
-            this._propagateEventToWidgets(event);
-        },
-        mouseout: function(event){
-            event = event || window.event //cross-IEness
-            this._propagateEventToWidgets(event);
-        },
-        mouseover: function(event){
-            event = event || window.event //cross-IEness
-            this._propagateEventToWidgets(event);
-        },
-        mouseup: function(event){
-            event = event || window.event //cross-IEness
-            this._propagateEventToWidgets(event);
-        },
-        keydown: function(event) {
-            event = event || window.event //cross-IEness
-            this._propagateEventToWidgets(event);
-        },
-        keypress: function(event){
-            event = event || window.event //cross-IEness
-            this._propagateEventToWidgets(event);
-        },
-        keyup: function(event){
-            event = event || window.event //cross-IEness
-            this._propagateEventToWidgets(event);
-        },
+            else {
+                for (var key in viewBox) Idea.Util.uintValidator(viewBox[key]);
+                viewBoxAttribute = viewBox.x + " " + viewBox.y + " " + viewBox.width + " " + viewBox.height;
+                this._canvas.setAttributeNS(Idea.Util.SVGNS, "viewBox", viewBoxAttribute);
+            }
+        }
     };
 })();
 
@@ -733,10 +663,11 @@ Idea.prototype.constructor = Idea;
     var Toolbar = function(idea){
     	this.idea = idea;
         this._div = document.createElement('div');
-        this._div.style.border = "1px solid rgb(200,200,200)";        
         this._div.style.display = "inline-block";
         this._div.style.overflow = "scrollbar";
-        this._div.style.width = "200px";
+        this._div.style.background = "rgb(200, 200, 200) no-repeat";
+        this._div.style.width = "800px";
+        this._div.style.height = "800px";
     };
 
     Toolbar.prototype = {};
@@ -988,6 +919,8 @@ Idea.prototype.constructor = Idea;
 //http://www.dotuscomus.com/svg/lib/iwsb/innerwinscroll.svg
 //http://www.carto.net/papers/svg/gui/scrollbar/
 //http://www.dotuscomus.com/svg/lib/library.html
+(function(){
+
 // http://www.dotuscomus.com/svg/lib/iwsb/innerwinscroll.svg
 // http://www.carto.net/papers/svg/gui/scrollbar/
 // http://www.dotuscomus.com/svg/lib/library.html
@@ -1023,10 +956,16 @@ var Scrollbar = function(father, scrollable, x, y, width, height, vertical, slid
 	this.scrollable = scrollable; // TODO: remove this scrollable, instead completely rely on events?
 	this.vertical = vertical;
 
-	if (scrollSize) this.scrollSize = scrollSize;
-	else this.scrollSize = height/25;
+	if (scrollSize) this.scrollSize = scrollSize; // TODO: validator
+	else {
+		if (vertical) this.scrollSize = height/100;
+		else this.scrollSize = width/100;
+	}
 	if (pageSize) this.pageSize = pageSize;
-	else this.pageSize = height/5;
+	else {
+		if (vertical) this.pageSize = height/5;
+		else this.pageSize = height/5;
+	}
 
 	this.scrollbar = Idea.Util.createSVGElement(father, 'svg', {x: x, y: y, width: width, height: height, viewBox: '0 0 ' + width + ' ' + height, xmlns: Idea.Util.SVGNS});
 
@@ -1053,15 +992,27 @@ var Scrollbar = function(father, scrollable, x, y, width, height, vertical, slid
 	*/
 
 	// scrollbar's buttons with arrow labels: the arrow's line is invisible, but the marker at the tip is auto-oriented with lines help
-	this.backwardButton = Idea.Util.createSVGElement(this.scrollbar, 'rect', {x:0, y:0, width:width, height:20, fill:"#a0a0a0"});
-	this.backwardArrow = Idea.Util.createSVGElement(this.scrollbar, 'line', {x1:parseInt(width/2), y1:17, x2:parseInt(width/2), y2:16,  "marker-end":"url(#arrowTip)", "stroke-width":"1", stroke:"#c0c0c0", "stroke-opacity": 0});
-	this.forwardButton = Idea.Util.createSVGElement(this.scrollbar, 'rect', {x:0, y:height-20, width:width, height:20, fill:"#a0a0a0"});
-	this.forwardArrow = Idea.Util.createSVGElement(this.scrollbar, 'line', {x1:parseInt(width/2), y1:height-17, x2:parseInt(width/2), y2: height-16, "marker-end":"url(#arrowTip)", "stroke-width":"1", stroke:"#c0c0c0", "stroke-opacity": 0});
+	if (this.vertical) {
+		this.backwardButton = Idea.Util.createSVGElement(this.scrollbar, 'rect', {x:0, y:0, width:width, height:20, fill:"#a0a0a0"});
+		this.backwardArrow = Idea.Util.createSVGElement(this.scrollbar, 'line', {x1:parseInt(width/2), y1:17, x2:parseInt(width/2), y2:16,  "marker-end":"url(#arrowTip)", "stroke-width":"1", stroke:"#c0c0c0", "stroke-opacity": 0});
+		this.forwardButton = Idea.Util.createSVGElement(this.scrollbar, 'rect', {x:0, y:height-20, width:width, height:20, fill:"#a0a0a0"});
+		this.forwardArrow = Idea.Util.createSVGElement(this.scrollbar, 'line', {x1:parseInt(width/2), y1:height-17, x2:parseInt(width/2), y2: height-16, "marker-end":"url(#arrowTip)", "stroke-width":"1", stroke:"#c0c0c0", "stroke-opacity": 0});
+		this.trough = Idea.Util.createSVGElement(this.scrollbar, 'g', {});
+		this.padding = Idea.Util.createSVGElement(this.trough, 'rect', {x:0, y:20, width:width, height:height-40, fill:"#c0c0c0"}); // this is the clickable part of scrollbar, where the slider moves
+		this.slider = Idea.Util.createSVGElement(this.trough, 'rect', {x:0, y:22, width:width, height:40, fill:"#a0a0a0", stroke:"#808080"}); // this is the draggable slider, which scrolls the element, associated with scrollbar
+		// filter:"url(#innerGlow)"		
+	}
+	else {
+		this.backwardButton = Idea.Util.createSVGElement(this.scrollbar, 'rect', {x:0, y:0, width:20, height:height, fill:"#a0a0a0"});
+		this.backwardArrow = Idea.Util.createSVGElement(this.scrollbar, 'line', {x1:17, y1:parseInt(height/2), x2:16, y2:parseInt(height/2),  "marker-end":"url(#arrowTip)", "stroke-width":"1", stroke:"#c0c0c0", "stroke-opacity": 0});
+		this.forwardButton = Idea.Util.createSVGElement(this.scrollbar, 'rect', {x:width-20, y:0, width:20, height:height, fill:"#a0a0a0"});
+		this.forwardArrow = Idea.Util.createSVGElement(this.scrollbar, 'line', {x1:width-17, y1:parseInt(height/2), x2:width-16, y2:parseInt(height/2), "marker-end":"url(#arrowTip)", "stroke-width":"1", stroke:"#c0c0c0", "stroke-opacity": 0});
+		this.trough = Idea.Util.createSVGElement(this.scrollbar, 'g', {});
+		this.padding = Idea.Util.createSVGElement(this.trough, 'rect', {x:20, y:0, width:width-40, height:height, fill:"#c0c0c0"}); // this is the clickable part of scrollbar, where the slider moves
+		this.slider = Idea.Util.createSVGElement(this.trough, 'rect', {x:22, y:0, width:40, height:height, fill:"#a0a0a0", stroke:"#808080"}); // this is the draggable slider, which scrolls the element, associated with scrollbar
+		// filter:"url(#innerGlow)"
 
-	this.trough = Idea.Util.createSVGElement(this.scrollbar, 'g', {});
-	this.padding = Idea.Util.createSVGElement(this.trough, 'rect', {x:0, y:20, width:width, height:height-40, fill:"#c0c0c0"}); // this is the clickable part of scrollbar, where the slider moves
-	this.slider = Idea.Util.createSVGElement(this.trough, 'rect', {x:0, y:22, width:width, height:40, fill:"#a0a0a0", stroke:"#808080"}); // this is the draggable slider, which scrolls the element, associated with scrollbar
-	// filter:"url(#innerGlow)"
+	}
 
 	this.trough.addEventListener("mousedown", this.troughClickHandler.bind(this));
 	this.slider.addEventListener("mousedown", this.sliderMouseDownHandler.bind(this));
@@ -1206,14 +1157,14 @@ Scrollbar.prototype = {
 		this.forwardButton.addEventListener('mouseout', this._bindedForwardButtonMouseOutHandler, false);
 
 		this.scrollForward();
-		this.scrollForwardInterval = setInterval(this.scrollForward.bind(this), 200);
+		this.scrollForwardInterval = setInterval(this.scrollForward.bind(this), 50);
 	},
 	forwardButtonMouseOutHandler: function(e){
 		clearInterval(this.scrollForwardInterval);
 		delete this.scrollForwardInterval;
 	},
 	forwardButtonMouseEnterHandler: function(e){
-		this.scrollForwardInterval = setInterval(this.scrollForward.bind(this), 200);
+		this.scrollForwardInterval = setInterval(this.scrollForward.bind(this), 50);
 	},	
 	forwardButtonMouseUpHandler: function(e){
 		clearInterval(this.scrollForwardInterval);
@@ -1253,7 +1204,7 @@ Scrollbar.prototype = {
 		this.backwardButton.addEventListener('mouseout', this._bindedBackwardButtonMouseOutHandler, false);
 
 		this.scrollBackward();
-		this.scrollBackwardInterval = setInterval(this.scrollBackward.bind(this), 200);
+		this.scrollBackwardInterval = setInterval(this.scrollBackward.bind(this), 50);
 
 	},
 	backwardButtonMouseOutHandler: function(e){
@@ -1261,7 +1212,7 @@ Scrollbar.prototype = {
 		delete this.scrollForwardInterval;
 	},
 	backwardButtonMouseEnterHandler: function(e){
-		this.scrollForwardInterval = setInterval(this.scrollBackward.bind(this), 200);
+		this.scrollForwardInterval = setInterval(this.scrollBackward.bind(this), 50);
 	},
 	backwardButtonMouseUpHandler: function(e){
 		clearInterval(this.scrollBackwardInterval);
@@ -1331,3 +1282,4 @@ Scrollbar.prototype = {
 };
 
 Idea.prototype.Scrollbar = Scrollbar;
+})();

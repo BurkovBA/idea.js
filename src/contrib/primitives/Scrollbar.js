@@ -1,3 +1,5 @@
+(function(){
+
 // http://www.dotuscomus.com/svg/lib/iwsb/innerwinscroll.svg
 // http://www.carto.net/papers/svg/gui/scrollbar/
 // http://www.dotuscomus.com/svg/lib/library.html
@@ -33,10 +35,16 @@ var Scrollbar = function(father, scrollable, x, y, width, height, vertical, slid
 	this.scrollable = scrollable; // TODO: remove this scrollable, instead completely rely on events?
 	this.vertical = vertical;
 
-	if (scrollSize) this.scrollSize = scrollSize;
-	else this.scrollSize = height/25;
+	if (scrollSize) this.scrollSize = scrollSize; // TODO: validator
+	else {
+		if (vertical) this.scrollSize = height/100;
+		else this.scrollSize = width/100;
+	}
 	if (pageSize) this.pageSize = pageSize;
-	else this.pageSize = height/5;
+	else {
+		if (vertical) this.pageSize = height/5;
+		else this.pageSize = height/5;
+	}
 
 	this.scrollbar = Idea.Util.createSVGElement(father, 'svg', {x: x, y: y, width: width, height: height, viewBox: '0 0 ' + width + ' ' + height, xmlns: Idea.Util.SVGNS});
 
@@ -63,15 +71,27 @@ var Scrollbar = function(father, scrollable, x, y, width, height, vertical, slid
 	*/
 
 	// scrollbar's buttons with arrow labels: the arrow's line is invisible, but the marker at the tip is auto-oriented with lines help
-	this.backwardButton = Idea.Util.createSVGElement(this.scrollbar, 'rect', {x:0, y:0, width:width, height:20, fill:"#a0a0a0"});
-	this.backwardArrow = Idea.Util.createSVGElement(this.scrollbar, 'line', {x1:parseInt(width/2), y1:17, x2:parseInt(width/2), y2:16,  "marker-end":"url(#arrowTip)", "stroke-width":"1", stroke:"#c0c0c0", "stroke-opacity": 0});
-	this.forwardButton = Idea.Util.createSVGElement(this.scrollbar, 'rect', {x:0, y:height-20, width:width, height:20, fill:"#a0a0a0"});
-	this.forwardArrow = Idea.Util.createSVGElement(this.scrollbar, 'line', {x1:parseInt(width/2), y1:height-17, x2:parseInt(width/2), y2: height-16, "marker-end":"url(#arrowTip)", "stroke-width":"1", stroke:"#c0c0c0", "stroke-opacity": 0});
+	if (this.vertical) {
+		this.backwardButton = Idea.Util.createSVGElement(this.scrollbar, 'rect', {x:0, y:0, width:width, height:20, fill:"#a0a0a0"});
+		this.backwardArrow = Idea.Util.createSVGElement(this.scrollbar, 'line', {x1:parseInt(width/2), y1:17, x2:parseInt(width/2), y2:16,  "marker-end":"url(#arrowTip)", "stroke-width":"1", stroke:"#c0c0c0", "stroke-opacity": 0});
+		this.forwardButton = Idea.Util.createSVGElement(this.scrollbar, 'rect', {x:0, y:height-20, width:width, height:20, fill:"#a0a0a0"});
+		this.forwardArrow = Idea.Util.createSVGElement(this.scrollbar, 'line', {x1:parseInt(width/2), y1:height-17, x2:parseInt(width/2), y2: height-16, "marker-end":"url(#arrowTip)", "stroke-width":"1", stroke:"#c0c0c0", "stroke-opacity": 0});
+		this.trough = Idea.Util.createSVGElement(this.scrollbar, 'g', {});
+		this.padding = Idea.Util.createSVGElement(this.trough, 'rect', {x:0, y:20, width:width, height:height-40, fill:"#c0c0c0"}); // this is the clickable part of scrollbar, where the slider moves
+		this.slider = Idea.Util.createSVGElement(this.trough, 'rect', {x:0, y:22, width:width, height:40, fill:"#a0a0a0", stroke:"#808080"}); // this is the draggable slider, which scrolls the element, associated with scrollbar
+		// filter:"url(#innerGlow)"		
+	}
+	else {
+		this.backwardButton = Idea.Util.createSVGElement(this.scrollbar, 'rect', {x:0, y:0, width:20, height:height, fill:"#a0a0a0"});
+		this.backwardArrow = Idea.Util.createSVGElement(this.scrollbar, 'line', {x1:17, y1:parseInt(height/2), x2:16, y2:parseInt(height/2),  "marker-end":"url(#arrowTip)", "stroke-width":"1", stroke:"#c0c0c0", "stroke-opacity": 0});
+		this.forwardButton = Idea.Util.createSVGElement(this.scrollbar, 'rect', {x:width-20, y:0, width:20, height:height, fill:"#a0a0a0"});
+		this.forwardArrow = Idea.Util.createSVGElement(this.scrollbar, 'line', {x1:width-17, y1:parseInt(height/2), x2:width-16, y2:parseInt(height/2), "marker-end":"url(#arrowTip)", "stroke-width":"1", stroke:"#c0c0c0", "stroke-opacity": 0});
+		this.trough = Idea.Util.createSVGElement(this.scrollbar, 'g', {});
+		this.padding = Idea.Util.createSVGElement(this.trough, 'rect', {x:20, y:0, width:width-40, height:height, fill:"#c0c0c0"}); // this is the clickable part of scrollbar, where the slider moves
+		this.slider = Idea.Util.createSVGElement(this.trough, 'rect', {x:22, y:0, width:40, height:height, fill:"#a0a0a0", stroke:"#808080"}); // this is the draggable slider, which scrolls the element, associated with scrollbar
+		// filter:"url(#innerGlow)"
 
-	this.trough = Idea.Util.createSVGElement(this.scrollbar, 'g', {});
-	this.padding = Idea.Util.createSVGElement(this.trough, 'rect', {x:0, y:20, width:width, height:height-40, fill:"#c0c0c0"}); // this is the clickable part of scrollbar, where the slider moves
-	this.slider = Idea.Util.createSVGElement(this.trough, 'rect', {x:0, y:22, width:width, height:40, fill:"#a0a0a0", stroke:"#808080"}); // this is the draggable slider, which scrolls the element, associated with scrollbar
-	// filter:"url(#innerGlow)"
+	}
 
 	this.trough.addEventListener("mousedown", this.troughClickHandler.bind(this));
 	this.slider.addEventListener("mousedown", this.sliderMouseDownHandler.bind(this));
@@ -216,14 +236,14 @@ Scrollbar.prototype = {
 		this.forwardButton.addEventListener('mouseout', this._bindedForwardButtonMouseOutHandler, false);
 
 		this.scrollForward();
-		this.scrollForwardInterval = setInterval(this.scrollForward.bind(this), 200);
+		this.scrollForwardInterval = setInterval(this.scrollForward.bind(this), 50);
 	},
 	forwardButtonMouseOutHandler: function(e){
 		clearInterval(this.scrollForwardInterval);
 		delete this.scrollForwardInterval;
 	},
 	forwardButtonMouseEnterHandler: function(e){
-		this.scrollForwardInterval = setInterval(this.scrollForward.bind(this), 200);
+		this.scrollForwardInterval = setInterval(this.scrollForward.bind(this), 50);
 	},	
 	forwardButtonMouseUpHandler: function(e){
 		clearInterval(this.scrollForwardInterval);
@@ -263,7 +283,7 @@ Scrollbar.prototype = {
 		this.backwardButton.addEventListener('mouseout', this._bindedBackwardButtonMouseOutHandler, false);
 
 		this.scrollBackward();
-		this.scrollBackwardInterval = setInterval(this.scrollBackward.bind(this), 200);
+		this.scrollBackwardInterval = setInterval(this.scrollBackward.bind(this), 50);
 
 	},
 	backwardButtonMouseOutHandler: function(e){
@@ -271,7 +291,7 @@ Scrollbar.prototype = {
 		delete this.scrollForwardInterval;
 	},
 	backwardButtonMouseEnterHandler: function(e){
-		this.scrollForwardInterval = setInterval(this.scrollBackward.bind(this), 200);
+		this.scrollForwardInterval = setInterval(this.scrollBackward.bind(this), 50);
 	},
 	backwardButtonMouseUpHandler: function(e){
 		clearInterval(this.scrollBackwardInterval);
@@ -341,3 +361,4 @@ Scrollbar.prototype = {
 };
 
 Idea.prototype.Scrollbar = Scrollbar;
+})();

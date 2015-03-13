@@ -68,23 +68,78 @@
  */
 
 Idea = function(){
+        // create a div container for our canvas
+        this._div = document.createElement('div');
+        this._div.style.border = "1px solid rgb(200,200,200)";
+        this._div.style.display = "inline-block";
+        //document.body.appendChild(this._div);
 
         this.slides = [new this.Slide()]; // slides in correct order
         this._slide = this.slides[0]; // currently active slide
         this._mode = "view"; // "view" or "edit" mode
 
         this.gui = {};
-        this._div = document.createElement('div');
-        this._topdiv = document.createElement('div');
-        this.gui.slidebar = new this.Slidebar();
-        this._topdiv.appendChild(this.gui.slidebar._div);
+
+        this.svg = Idea.Util.createSVGElement(this._div, 'svg', {width: Idea.Conf.defaultViewportWidth, height: Idea.Conf.defaultViewportHeight});
         this.canvas = new this.Canvas(this);
-        this._topdiv.appendChild(this.canvas._div);
+        this.svg.appendChild(this.canvas._canvas);
+        this._vScrollbar = new this.Scrollbar(this.svg, this.canvas, this.svg.getAttribute("width")-40, 0, 40, this.svg.getAttribute("height")-40, true);
+        this._hScrollbar = new this.Scrollbar(this.svg, this.canvas, 0, this.svg.getAttribute("height")-40, this.svg.getAttribute("width")-40, 40, false);
+        this._div.appendChild(this.svg);
+
         this.gui.tools = new this.Toolbar();
-        this._topdiv.appendChild(this.gui.tools._div);
-        this._div.appendChild(this._topdiv);
-        this.gui.timeline = new this.Timeline();
-        this._div.appendChild(this.gui.timeline._div);
+        this._div.appendChild(this.gui.tools._div);
+
+        // create resize grip
+        this._grip = document.createElement('div');
+        this._grip.style.width = 10;
+        this._grip.style.height = 10;
+        this._grip.style.display = "inline-block";
+        this._grip.style.background = "#AAAAAA";
+        this._grip.style.float = "right";
+        this._div.appendChild(this._grip);
+
+        this._grip.onmousedown = function(event){
+            event = Idea.Util.normalizeMouseEvent(event);
+            if (event.which == 1) {
+                this._grip_pressed = true;
+                this._grip_x = event.clientX;
+                this._grip_y = event.clientY;
+                // add event listeners to <html> (i.e. document.documentElement)
+                // to respond to mousemove and mouseup if they're outside _grip.
+                // idea taken from here:
+                // http://stackoverflow.com/questions/8960193/how-to-make-html-element-resizable-using-pure-javascript
+                var Up = function(event){
+                    event = Idea.Util.normalizeMouseEvent(event)
+                    if (event.which == 1) {
+                        this._grip_pressed = false;
+                        document.documentElement.removeEventListener('mousemove', Move, false);
+                        document.documentElement.removeEventListener('mouseup', Up, false);
+                    }
+                }.bind(this);
+                
+                var Move = function(event) {
+                    event = Idea.Util.normalizeMouseEvent(event)
+                    if (this._grip_pressed === true){
+                        this.width(parseInt(this.width()) + event.clientX - this._grip_x);
+                        this.height(parseInt(this.height()) + event.clientY - this._grip_y);
+                        this._grip_x = event.clientX;
+                        this._grip_y = event.clientY;
+                    }
+                }.bind(this);
+
+                document.documentElement.addEventListener('mouseup', Up, false);
+                document.documentElement.addEventListener('mousemove', Move, false);
+            }
+        }.bind(this);
+        this._grip.onmouseover = function(event){
+            event = Idea.Util.normalizeMouseEvent(event);
+            this.style.cursor = "nw-resize";
+        };
+        //create clear element to clear floats
+        this._clear = document.createElement('div');
+        this._grip.style.clear = "both";
+        this._div.appendChild(this._clear);        
 };
 
 /*
@@ -103,6 +158,21 @@ Idea.Util = {};
 Idea.Conf = {};
 
 Idea.prototype = {
+    mode: function(mode){
+        if (mode === undefined) {return this._mode;}
+        else {
+            if (mode == "view" || mode == "edit") {this._mode = mode;}
+            else {throw new Error("Wrong mode value: '" + mode + "', should be in ['view', 'edit']!");}
+        }
+    },
+
+    slide: function(slide){
+        if (slide === undefined) {return this._slide;}
+        else {
+            if (this.slides.contains(slide)) {this._slide = slide;}
+            else {throw new Error("Slide not in slides!");}
+        }
+    },
 
     insertSlide: function(index, slide){
         // create and insert slide preview to the slidebar
@@ -117,6 +187,7 @@ Idea.prototype = {
         }
         this.splice(index, 0, slide);
     },
+
     appendSlide: function(slide){
         this.insertSlide(this.length, slide);
     }

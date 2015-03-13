@@ -80,7 +80,7 @@ Idea = function(){
 
         this.gui = {};
 
-        this.svg = Idea.Util.createSVGElement(this._div, 'svg', {width: Idea.Conf.defaultViewportWidth, height: Idea.Conf.defaultViewportHeight});
+        this.svg = Idea.Util.createSVGElement(this._div, 'svg', {width: Idea.Conf.defaultViewportWidth+40, height: Idea.Conf.defaultViewportHeight+40});
         this.canvas = new this.Canvas(this);
         this.svg.appendChild(this.canvas._canvas);
         this._vScrollbar = new this.Scrollbar(this.svg, this.canvas, this.svg.getAttribute("width")-40, 0, 40, this.svg.getAttribute("height")-40, true);
@@ -684,8 +684,8 @@ Idea.prototype.constructor = Idea;
         this._div.style.display = "inline-block";
         this._div.style.overflow = "scrollbar";
         this._div.style.background = "rgb(200, 200, 200) no-repeat";
-        this._div.style.width = "800px";
-        this._div.style.height = "800px";
+        this._div.style.width = "" + (Idea.Conf.defaultViewportWidth + 40) +"px";
+        this._div.style.height = "" + (Idea.Conf.defaultViewportHeight + 40) +"px";
     };
 
     Toolbar.prototype = {};

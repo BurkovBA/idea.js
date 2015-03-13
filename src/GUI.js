@@ -40,8 +40,8 @@
         this._div.style.display = "inline-block";
         this._div.style.overflow = "scrollbar";
         this._div.style.background = "rgb(200, 200, 200) no-repeat";
-        this._div.style.width = "800px";
-        this._div.style.height = "800px";
+        this._div.style.width = "" + (Idea.Conf.defaultViewportWidth + 40) +"px";
+        this._div.style.height = "" + (Idea.Conf.defaultViewportHeight + 40) +"px";
     };
 
     Toolbar.prototype = {};

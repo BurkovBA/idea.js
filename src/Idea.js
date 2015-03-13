@@ -80,7 +80,7 @@ Idea = function(){
 
         this.gui = {};
 
-        this.svg = Idea.Util.createSVGElement(this._div, 'svg', {width: Idea.Conf.defaultViewportWidth, height: Idea.Conf.defaultViewportHeight});
+        this.svg = Idea.Util.createSVGElement(this._div, 'svg', {width: Idea.Conf.defaultViewportWidth+40, height: Idea.Conf.defaultViewportHeight+40});
         this.canvas = new this.Canvas(this);
         this.svg.appendChild(this.canvas._canvas);
         this._vScrollbar = new this.Scrollbar(this.svg, this.canvas, this.svg.getAttribute("width")-40, 0, 40, this.svg.getAttribute("height")-40, true);

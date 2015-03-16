@@ -71,6 +71,7 @@ Idea = function(){
         // create a div container for our canvas
         this._div = document.createElement('div');
         this._div.style.border = "1px solid rgb(200,200,200)";
+        this._div.style.padding = "3px";
         this._div.style.display = "inline-block";
         //document.body.appendChild(this._div);
 

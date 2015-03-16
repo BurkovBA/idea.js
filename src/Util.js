@@ -6,6 +6,7 @@
         MOUSE_EVENTS: ["click", "dblclick", "mousedown", "mousemove", "mouseout", "mouseover", "mouseup"],
         KEYBOARD_EVENTS: ["keydown", "keypress", "keyup"],
         UINTREGEX: /^\d+$/,
+        INTREGEX: /^\-?\d+$/,
         isHexColor: function(color){return /^#[0-9A-F]{6}$/i.test(color)},
 
         normalizeMouseEvent: function(event){
@@ -258,6 +259,10 @@
 
         uintValidator: function(arg, argName){
             if (!Idea.Util.UINTREGEX.test(arg)) throw new Error(argName + " should be unsigned int, got: '" + arg + "'!");
+        },
+
+        intValidator: function(arg, argName){
+            if (!Idea.Util.INTREGEX.test(arg)) throw new Error(argName + " should be int, got: '" + arg + "'!");
         },
 
         /*

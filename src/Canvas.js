@@ -29,6 +29,7 @@
     Idea.prototype.Canvas = function(idea, width, height){
         // create the canvas itself, set its attributes and insert it into div    
         this._canvas = document.createElementNS(Idea.Util.SVGNS, 'svg');
+        //this._canvas.style.border = "1px solid #000";
 
         //this._canvas.setAttribute("version", "1.1")
         //this._canvas.setAttribute("xmlns", Idea.Util.SVGNS);
@@ -60,7 +61,8 @@
         Idea.Util.createSVGElement(this.gridPattern, 'rect', {width:"80", height:"80", fill:"url(#smallGridPattern)"});
         Idea.Util.createSVGElement(this.gridPattern, 'path', {d:"M 80 0 L 0 0 0 80", fill:"none", stroke: "#c0c0c0", "stroke-width": "1"});
 
-        this.grid = Idea.Util.createSVGElement(this._canvas, 'rect', {width:"100%", height: "100%", fill:"url(#gridPattern)"});
+        //this.grid = Idea.Util.createSVGElement(this._canvas, 'rect', {width:"100%", height: "100%", fill:"url(#gridPattern)"});
+        this.grid = Idea.Util.createSVGElement(this._canvas, 'rect', {x:Idea.Conf.canvasLeft, y:Idea.Conf.canvasTop, width:Idea.Conf.canvasWidth, height:Idea.Conf.canvasHeight, fill:"url(#gridPattern)"});
 
         // TODO REMOVE THIS IT'S A TEST
         this.rect = Idea.Util.createSVGElement(this._canvas, 'rect', {
@@ -71,6 +73,15 @@
         });
         this.rect.style.stroke = "black";
         this.rect.style.fill = "none";
+
+        another_rect = Idea.Util.createSVGElement(this._canvas, 'rect', {
+            "x": -100,
+            "y": -100,
+            "width": 350,
+            "height": 350
+        });
+        another_rect.style.stroke = "black";
+        another_rect.style.fill = "none";
         // TODO REMOVE THIS IT'S A TEST
 
         // http://en.wikipedia.org/wiki/HTML_attribute - list of events
@@ -90,16 +101,16 @@
         viewBox: function(viewBox){
             var dimensions, viewBoxAttribute;
             if (viewBox === undefined){
-                viewBoxAttribute = this._canvas.getAttributeNS(null, 'viewBox');
-                dimensions = viewBox.split(" ");
+                viewBoxAttribute = this._canvas.getAttribute('viewBox'); //this._canvas.getAttributeNS(null, 'viewBox');
+                dimensions = viewBoxAttribute.split(" ");
                 dimensions.forEach(function(element, index, array){array[index] = parseInt(element);});
                 viewBox = {x: dimensions[0], y: dimensions[1], width: dimensions[2], height: dimensions[3]};
                 return viewBox;
             }
             else {
-                for (var key in viewBox) Idea.Util.uintValidator(viewBox[key]);
+                for (var key in viewBox) Idea.Util.intValidator(viewBox[key]);
                 viewBoxAttribute = viewBox.x + " " + viewBox.y + " " + viewBox.width + " " + viewBox.height;
-                this._canvas.setAttributeNS(Idea.Util.SVGNS, "viewBox", viewBoxAttribute);
+                this._canvas.setAttribute("viewBox", viewBoxAttribute);  //this._canvas.setAttributeNS(Idea.Util.SVGNS, "viewBox", viewBoxAttribute);
             }
         }
     };

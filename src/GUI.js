@@ -2,7 +2,7 @@
     var Slidebar = function(idea){
         this.idea = idea;
         this._div = document.createElement('div');
-        this._div.style.border = "1px solid rgb(200,200,200)";        
+        this._div.style.border = "1px solid rgb(200,200,200)";
         this._div.style.display = "inline-block";
         this._div.style.overflow = "scrollbar";
         this._div.style.width = "200px";
@@ -39,7 +39,9 @@
         this._div = document.createElement('div');
         this._div.style.display = "inline-block";
         this._div.style.overflow = "scrollbar";
-        this._div.style.background = "rgb(200, 200, 200) no-repeat";
+        this._div.style.background = "#31353c no-repeat";
+        this._div.style.border = "1px solid #000";
+        this._div.style.margin = "0 0 0 3";
         this._div.style.width = "" + (Idea.Conf.defaultViewportWidth + 40) +"px";
         this._div.style.height = "" + (Idea.Conf.defaultViewportHeight + 40) +"px";
     };

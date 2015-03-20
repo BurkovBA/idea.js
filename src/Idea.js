@@ -84,9 +84,17 @@ Idea = function(){
         this.svg = Idea.Util.createSVGElement(this._div, 'svg', {width: Idea.Conf.defaultViewportWidth+40, height: Idea.Conf.defaultViewportHeight+40});
         this.canvas = new this.Canvas(this);
         this.svg.appendChild(this.canvas._canvas);
-        this._vScrollbar = new this.Scrollbar(this.svg, this.canvas, this.svg.getAttribute("width")-40, 0, 40, this.svg.getAttribute("height")-40, true);
-        this._hScrollbar = new this.Scrollbar(this.svg, this.canvas, 0, this.svg.getAttribute("height")-40, this.svg.getAttribute("width")-40, 40, false);
+        this.svg.style.display = "inline-block";
+        this.svg.style.border = "1px solid black";        
         this._div.appendChild(this.svg);
+
+        var scrollbarPageSize = parseInt(Idea.Conf.canvasHeight / this.canvas.height());
+        var scrollbarScrollSize = parseInt(Idea.Conf.canvasHeight / this.canvas.height() / Idea.Conf.scrollbarScrollsPerPage);
+        this._vScrollbar = new this.Scrollbar(this.svg, this.canvas, this.svg.getAttribute("width")-40, 0, 40, this.svg.getAttribute("height")-40, true, null, null, scrollbarPageSize, scrollbarScrollSize);
+
+        scrollbarPageSize = parseInt(Idea.Conf.canvasWidth / this.canvas.width());
+        scrollbarScrollSize = parseInt(Idea.Conf.canvasWidth / this.canvas.width() / Idea.Conf.scrollbarScrollsPerPage);
+        this._hScrollbar = new this.Scrollbar(this.svg, this.canvas, 0, this.svg.getAttribute("height")-40, this.svg.getAttribute("width")-40, 40, false, null, null, scrollbarPageSize, scrollbarScrollSize);
 
         this.gui.tools = new this.Toolbar();
         this._div.appendChild(this.gui.tools._div);
@@ -137,10 +145,13 @@ Idea = function(){
             event = Idea.Util.normalizeMouseEvent(event);
             this.style.cursor = "nw-resize";
         };
+
+        /*
         //create clear element to clear floats
         this._clear = document.createElement('div');
         this._grip.style.clear = "both";
         this._div.appendChild(this._clear);        
+        */
 };
 
 /*
@@ -157,6 +168,17 @@ Idea.Util = {};
  */
 
 Idea.Conf = {};
+
+/*
+ * Idea.ObjectsRegistry is a mapping {CathegoryName: Cathegory} or {Cathegory: Object}, where
+ * cathegories are Strings (e.g. "Basic", "Electrical Engineering", "Linear Algebra" etc.) and
+ * Objects are clickable objects, that user can create on the canvas, e.g. "Line", "Rectangle", 
+ * "Vertex" (in graph-theoretical sense), "Oxygen" (as a graphical representation of atom in 
+ * chemical formula). Cathegories can be nested, so that within "Linear Algebra" is nested in "Math".
+ *
+ */
+
+Idea.ObjectsRegistry = {};
 
 Idea.prototype = {
     mode: function(mode){

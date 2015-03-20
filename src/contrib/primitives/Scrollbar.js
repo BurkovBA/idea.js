@@ -40,6 +40,7 @@ var Scrollbar = function(father, scrollable, x, y, width, height, vertical, slid
 		if (vertical) this.scrollSize = height/100;
 		else this.scrollSize = width/100;
 	}
+	console.log("scrollSize = " + this.scrollSize);	
 	if (pageSize) this.pageSize = pageSize;
 	else {
 		if (vertical) this.pageSize = height/5;
@@ -110,7 +111,7 @@ Scrollbar.prototype = {
 		var railX = parseInt(this.rail.getAttribute("x"));
 		var railY = parseInt(this.rail.getAttribute("y"));
 		var railHeight = parseInt(this.rail.getAttribute("height"));		
-		var railWidth = parseInt(this.rail.getAttribute("width"));
+		var railWidth = parseInt(this.rail.getAttribute("width"));		
 		var sliderHeight = parseInt(this.slider.getAttribute("height"));
 		var sliderWidth = parseInt(this.slider.getAttribute("width"));
 
@@ -122,6 +123,13 @@ Scrollbar.prototype = {
 			if (canvasCoords.x + sliderWidth > railX + railWidth) this.slider.setAttribute("x", railX + railWidth - sliderWidth);
 			else this.slider.setAttribute("x", canvasCoords.x);
 		}
+
+		var sliderX = parseInt(this.slider.getAttribute("x"));
+		var sliderY = parseInt(this.slider.getAttribute("y"));
+		var viewBox = this.scrollable.viewBox();
+		if (this.vertical) viewBox.y = parseInt((sliderY - railY) / railHeight * Idea.Conf.canvasHeight - Idea.Conf.canvasHeight/2);
+		else viewBox.x = parseInt((sliderX - railX) / railWidth * Idea.Conf.canvasWidth - Idea.Conf.canvasWidth/2);
+		this.scrollable.viewBox(viewBox);
 	},
 	sliderMouseDownHandler: function(e){
 		e.preventDefault();
@@ -199,8 +207,6 @@ Scrollbar.prototype = {
 			}
 
 			this.slider.setAttribute("y", sliderY + delta); // move slider
-
-			// TODO call setViewBox on scrollable
 		}
 		else {
 			if (delta > railWidth - (sliderX - railX) - sliderWidth) {
@@ -211,8 +217,12 @@ Scrollbar.prototype = {
 			}
 
 			this.slider.setAttribute("x", sliderX + delta); // redraw slider
-			// TODO call setViewBox on scrollable
 		}
+
+		var viewBox = this.scrollable.viewBox();
+		if (this.vertical) viewBox.y = parseInt((sliderY - railY) / railHeight * Idea.Conf.canvasHeight - Idea.Conf.canvasHeight/2);
+		else viewBox.x = parseInt((sliderX - railX) / railWidth * Idea.Conf.canvasWidth - Idea.Conf.canvasWidth/2);
+		this.scrollable.viewBox(viewBox);
 		//console.log("delta = " + delta);
 	},
 	sliderDragMouseUpHandler: function(e){
@@ -359,8 +369,8 @@ Scrollbar.prototype = {
 		}
 
 		var viewBox = this.scrollable.viewBox();
-		if (this.vertical) viewBox.y = viewBox.y + viewBox.height/100;
-		else viewBox.x = viewBox.x + viewBox.width/100;
+		if (this.vertical) viewBox.y = viewBox.y + this.scrollSize;
+		else viewBox.x = viewBox.x + this.scrollSize;
 		this.scrollable.viewBox(viewBox);
 	},
 	scrollBackward: function(){
@@ -379,8 +389,8 @@ Scrollbar.prototype = {
 		}
 
 		var viewBox = this.scrollable.viewBox();
-		if (this.vertical) viewBox.y = viewBox.y - viewBox.height/100;
-		else viewBox.x = viewBox.x - viewBox.width/100;
+		if (this.vertical) viewBox.y = viewBox.y - this.scrollSize;
+		else viewBox.x = viewBox.x - this.scrollSize;
 		this.scrollable.viewBox(viewBox);
 	},
 	pageForward: function(){},

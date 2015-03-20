@@ -9,6 +9,30 @@
         INTREGEX: /^\-?\d+$/,
         isHexColor: function(color){return /^#[0-9A-F]{6}$/i.test(color)},
 
+        // classList is available in ie8+ or ie10+ according to different sources; not in Opera Mini
+        // thus we define jquery-like utility methods for manipulations with classes
+        hasClass: function(element, className){
+            if (element.classList)
+              return element.classList.contains(className);
+            else
+              return new RegExp('(^| )' + className + '( |$)', 'gi').test(element.className);
+        },
+
+        addClass: function(element, className){
+            if (element.classList) {
+                element.classList.add(className);
+            }
+            else
+                element.className += ' ' + className;
+        },
+
+        removeClass: function(element, className){
+            if (element.classList)
+              element.classList.remove(className);
+            else
+              element.className = element.className.replace(new RegExp('(^|\\b)' + className.split(' ').join('|') + '(\\b|$)', 'gi'), ' ');
+        },
+
         normalizeMouseEvent: function(event){
             // ie has event undefined; instead, it has window.event
             event = event || window.event;

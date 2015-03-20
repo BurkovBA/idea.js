@@ -33,6 +33,8 @@
 
         //this._canvas.setAttribute("version", "1.1")
         //this._canvas.setAttribute("xmlns", Idea.Util.SVGNS);
+        this._canvas.setAttribute('x', "0");
+        this._canvas.setAttribute('y', "0");
         this.width(Idea.Conf.defaultViewportWidth);
         this.height(Idea.Conf.defaultViewportHeight);
 
@@ -74,7 +76,7 @@
         this.rect.style.stroke = "black";
         this.rect.style.fill = "none";
 
-        another_rect = Idea.Util.createSVGElement(this._canvas, 'rect', {
+        var another_rect = Idea.Util.createSVGElement(this._canvas, 'rect', {
             "x": -100,
             "y": -100,
             "width": 350,
@@ -108,7 +110,7 @@
                 return viewBox;
             }
             else {
-                for (var key in viewBox) Idea.Util.intValidator(viewBox[key]);
+                for (var key in viewBox) Idea.Util.intValidator(viewBox[key], "viewBox." + key);
                 viewBoxAttribute = viewBox.x + " " + viewBox.y + " " + viewBox.width + " " + viewBox.height;
                 this._canvas.setAttribute("viewBox", viewBoxAttribute);  //this._canvas.setAttributeNS(Idea.Util.SVGNS, "viewBox", viewBoxAttribute);
             }

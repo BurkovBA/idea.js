@@ -1,0 +1,41 @@
+@import url(http://fonts.googleapis.com/css?family=Open+Sans);
+
+.toolbar {
+	font-size: 20px;
+	font-family: 'Open Sans', sans-serif;
+	display: inline-block;
+	vertical-align: top;
+	/*overflow: scrollbar;*/
+	background: #31353c;
+	border: 1px solid #000;
+	margin: 0 0 0 3;
+}
+
+.toolbar-tabbar {
+	display: inline-block;
+	margin-top: 10px;
+	margin-left: 10px;
+}
+
+.toolbar-tab {
+	display: inline-block;
+	padding: 5px;
+	/*border: 1px solid rgb(52, 64, 71);*/
+	color: #6f788a;
+	background-color: rgb(43, 58, 66);
+	cursor: pointer;
+}
+
+.toolbar-tab.active {
+	display: inline-block;
+	color: white;
+	background-color: rgb(52, 64, 71);
+}
+
+.toolbar-page {
+	display: none;
+}
+
+.toolbar-page.active {
+	display: block;
+}

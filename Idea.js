@@ -84,9 +84,17 @@ Idea = function(){
         this.svg = Idea.Util.createSVGElement(this._div, 'svg', {width: Idea.Conf.defaultViewportWidth+40, height: Idea.Conf.defaultViewportHeight+40});
         this.canvas = new this.Canvas(this);
         this.svg.appendChild(this.canvas._canvas);
-        this._vScrollbar = new this.Scrollbar(this.svg, this.canvas, this.svg.getAttribute("width")-40, 0, 40, this.svg.getAttribute("height")-40, true);
-        this._hScrollbar = new this.Scrollbar(this.svg, this.canvas, 0, this.svg.getAttribute("height")-40, this.svg.getAttribute("width")-40, 40, false);
+        this.svg.style.display = "inline-block";
+        this.svg.style.border = "1px solid black";        
         this._div.appendChild(this.svg);
+
+        var scrollbarPageSize = parseInt(Idea.Conf.canvasHeight / this.canvas.height());
+        var scrollbarScrollSize = parseInt(Idea.Conf.canvasHeight / this.canvas.height() / Idea.Conf.scrollbarScrollsPerPage);
+        this._vScrollbar = new this.Scrollbar(this.svg, this.canvas, this.svg.getAttribute("width")-40, 0, 40, this.svg.getAttribute("height")-40, true, null, null, scrollbarPageSize, scrollbarScrollSize);
+
+        scrollbarPageSize = parseInt(Idea.Conf.canvasWidth / this.canvas.width());
+        scrollbarScrollSize = parseInt(Idea.Conf.canvasWidth / this.canvas.width() / Idea.Conf.scrollbarScrollsPerPage);
+        this._hScrollbar = new this.Scrollbar(this.svg, this.canvas, 0, this.svg.getAttribute("height")-40, this.svg.getAttribute("width")-40, 40, false, null, null, scrollbarPageSize, scrollbarScrollSize);
 
         this.gui.tools = new this.Toolbar();
         this._div.appendChild(this.gui.tools._div);
@@ -137,10 +145,13 @@ Idea = function(){
             event = Idea.Util.normalizeMouseEvent(event);
             this.style.cursor = "nw-resize";
         };
+
+        /*
         //create clear element to clear floats
         this._clear = document.createElement('div');
         this._grip.style.clear = "both";
         this._div.appendChild(this._clear);        
+        */
 };
 
 /*
@@ -157,6 +168,17 @@ Idea.Util = {};
  */
 
 Idea.Conf = {};
+
+/*
+ * Idea.ObjectsRegistry is a mapping {CathegoryName: Cathegory} or {Cathegory: Object}, where
+ * cathegories are Strings (e.g. "Basic", "Electrical Engineering", "Linear Algebra" etc.) and
+ * Objects are clickable objects, that user can create on the canvas, e.g. "Line", "Rectangle", 
+ * "Vertex" (in graph-theoretical sense), "Oxygen" (as a graphical representation of atom in 
+ * chemical formula). Cathegories can be nested, so that within "Linear Algebra" is nested in "Math".
+ *
+ */
+
+Idea.ObjectsRegistry = {};
 
 Idea.prototype = {
     mode: function(mode){
@@ -199,14 +221,18 @@ Idea.prototype.constructor = Idea;
 
 (function(){
     Idea.Conf = {
-    	canvasWidth: 20000, // this determines the size of coordinates grid (in canvas coordinates)
-    	canvasHeight: 20000, // this determines the size of coordinates grid (in canvas coordinates)
-    	canvasLeft: -10000, // this is where coordinates grid pattern starts to be drawn (in canvas coordinates)
-    	canvasTop: -10000, // this is where coordinates grid pattern starts to be drawn (in canvas coordinates)
+    	canvasWidth: 2000, // this determines the size of coordinates grid (in canvas coordinates)
+    	canvasHeight: 2000, // this determines the size of coordinates grid (in canvas coordinates)
+    	canvasLeft: -1000, // this is where coordinates grid pattern starts to be drawn (in canvas coordinates)
+    	canvasTop: -1000, // this is where coordinates grid pattern starts to be drawn (in canvas coordinates)
+
         defaultViewboxWidth: 4096, // this is in canvas coordinates
         defaultViewboxHeight: 4096, // this is in canvas coordinates
         defaultViewportWidth: 800, // this is in browser window coordinates
         defaultViewportHeight: 800, // this is in browser window coordinates
+
+    	scrollbarScrollsPerPage: 20, // how many lines per page are there in vertical scrollbar or how many chars per line in horizontal scrollbar
+
         framerate: 25
     };
 })();
@@ -221,6 +247,30 @@ Idea.prototype.constructor = Idea;
         UINTREGEX: /^\d+$/,
         INTREGEX: /^\-?\d+$/,
         isHexColor: function(color){return /^#[0-9A-F]{6}$/i.test(color)},
+
+        // classList is available in ie8+ or ie10+ according to different sources; not in Opera Mini
+        // thus we define jquery-like utility methods for manipulations with classes
+        hasClass: function(element, className){
+            if (element.classList)
+              return element.classList.contains(className);
+            else
+              return new RegExp('(^| )' + className + '( |$)', 'gi').test(element.className);
+        },
+
+        addClass: function(element, className){
+            if (element.classList) {
+                element.classList.add(className);
+            }
+            else
+                element.className += ' ' + className;
+        },
+
+        removeClass: function(element, className){
+            if (element.classList)
+              element.classList.remove(className);
+            else
+              element.className = element.className.replace(new RegExp('(^|\\b)' + className.split(' ').join('|') + '(\\b|$)', 'gi'), ' ');
+        },
 
         normalizeMouseEvent: function(event){
             // ie has event undefined; instead, it has window.event
@@ -559,6 +609,8 @@ Idea.prototype.constructor = Idea;
 
         //this._canvas.setAttribute("version", "1.1")
         //this._canvas.setAttribute("xmlns", Idea.Util.SVGNS);
+        this._canvas.setAttribute('x', "0");
+        this._canvas.setAttribute('y', "0");
         this.width(Idea.Conf.defaultViewportWidth);
         this.height(Idea.Conf.defaultViewportHeight);
 
@@ -600,7 +652,7 @@ Idea.prototype.constructor = Idea;
         this.rect.style.stroke = "black";
         this.rect.style.fill = "none";
 
-        another_rect = Idea.Util.createSVGElement(this._canvas, 'rect', {
+        var another_rect = Idea.Util.createSVGElement(this._canvas, 'rect', {
             "x": -100,
             "y": -100,
             "width": 350,
@@ -634,7 +686,7 @@ Idea.prototype.constructor = Idea;
                 return viewBox;
             }
             else {
-                for (var key in viewBox) Idea.Util.intValidator(viewBox[key]);
+                for (var key in viewBox) Idea.Util.intValidator(viewBox[key], "viewBox." + key);
                 viewBoxAttribute = viewBox.x + " " + viewBox.y + " " + viewBox.width + " " + viewBox.height;
                 this._canvas.setAttribute("viewBox", viewBoxAttribute);  //this._canvas.setAttributeNS(Idea.Util.SVGNS, "viewBox", viewBoxAttribute);
             }
@@ -702,13 +754,75 @@ Idea.prototype.constructor = Idea;
     var Toolbar = function(idea){
     	this.idea = idea;
         this._div = document.createElement('div');
-        this._div.style.display = "inline-block";
-        this._div.style.overflow = "scrollbar";
-        this._div.style.background = "#31353c no-repeat";
-        this._div.style.border = "1px solid #000";
-        this._div.style.margin = "0 0 0 3";
+        this._div.className = 'toolbar';
         this._div.style.width = "" + (Idea.Conf.defaultViewportWidth + 40) +"px";
         this._div.style.height = "" + (Idea.Conf.defaultViewportHeight + 40) +"px";
+
+        this.tabBar = document.createElement('div');
+        this._div.appendChild(this.tabBar);
+        Idea.Util.addClass(this.tabBar, 'toolbar-tabbar');
+
+        this.fileTab = document.createElement('div');
+        this.fileTab.innerHTML = "File"; //ie8+/9+
+        this.tabBar.appendChild(this.fileTab);
+        Idea.Util.addClass(this.fileTab, 'toolbar-tab');
+        Idea.Util.addClass(this.fileTab, 'active');
+
+        this.objectsTab = document.createElement('div');
+        this.objectsTab.innerHTML = "Objects"; //ie8+/9+
+        this.tabBar.appendChild(this.objectsTab);
+        Idea.Util.addClass(this.objectsTab, 'toolbar-tab');
+
+        this.animationsTab = document.createElement('div');
+        this.animationsTab.innerHTML = "Animations"; //ie8+/9+
+        this.tabBar.appendChild(this.animationsTab);
+        Idea.Util.addClass(this.animationsTab, 'toolbar-tab')
+
+        this.filePage = document.createElement('div');
+        this._div.appendChild(this.filePage);
+        Idea.Util.addClass(this.filePage, 'toolbar-page');
+        Idea.Util.addClass(this.filePage, 'active');
+
+        this.objectsPage = document.createElement('div');
+        this._div.appendChild(this.objectsPage);
+        Idea.Util.addClass(this.objectsPage, 'toolbar-page');
+
+        this.animationsPage = document.createElement('div');
+        this._div.appendChild(this.animationsPage);
+        Idea.Util.addClass(this.animationsPage, 'toolbar-page');
+
+        var toolbarTabs = [this.fileTab, this.objectsTab, this.animationsTab];
+        var toolbarPages = [this.filePage, this.objectsPage, this.animationsPage];
+
+        this.fileTab.addEventListener('click', function(){
+            toolbarPages.forEach(function(el, index, array){if (Idea.Util.hasClass(el, 'active')) Idea.Util.removeClass(el, 'active')});
+            toolbarTabs.forEach(function(el, index, array){if (Idea.Util.hasClass(el, 'active')) Idea.Util.removeClass(el, 'active')});
+            if (!Idea.Util.hasClass(this.fileTab, 'active')) Idea.Util.addClass(this.fileTab, 'active');
+            if (!Idea.Util.hasClass(this.filePage, 'active')) Idea.Util.addClass(this.filePage, 'active');
+        }.bind(this));
+
+        this.objectsTab.addEventListener('click', function(){
+            toolbarPages.forEach(function(el, index, array){if (Idea.Util.hasClass(el, 'active')) Idea.Util.removeClass(el, 'active')});
+            toolbarTabs.forEach(function(el, index, array){if (Idea.Util.hasClass(el, 'active')) Idea.Util.removeClass(el, 'active')});
+            if (!Idea.Util.hasClass(this.objectsTab, 'active')) Idea.Util.addClass(this.objectsTab, 'active');
+            if (!Idea.Util.hasClass(this.objectsPage, 'active')) Idea.Util.addClass(this.objectsPage, 'active');
+        }.bind(this));
+
+        this.animationsTab.addEventListener('click', function(){
+            toolbarPages.forEach(function(el, index, array){if (Idea.Util.hasClass(el, 'active')) Idea.Util.removeClass(el, 'active')});
+            toolbarTabs.forEach(function(el, index, array){if (Idea.Util.hasClass(el, 'active')) Idea.Util.removeClass(el, 'active')});
+            if (!Idea.Util.hasClass(this.animationsTab, 'active')) Idea.Util.addClass(this.animationsTab, 'active');
+            if (!Idea.Util.hasClass(this.animationsPage, 'active')) Idea.Util.addClass(this.animationsPage, 'active');
+        }.bind(this));
+
+
+        this.objectsMenu = document.createElement('div');
+        this.objectsTab.appendChild(this.objectsMenu);
+
+        this.objectContext = document.createElement('div');
+        this.objectsTab.appendChild(this.objectContext);
+
+
     };
 
     Toolbar.prototype = {};
@@ -1002,6 +1116,7 @@ var Scrollbar = function(father, scrollable, x, y, width, height, vertical, slid
 		if (vertical) this.scrollSize = height/100;
 		else this.scrollSize = width/100;
 	}
+	console.log("scrollSize = " + this.scrollSize);	
 	if (pageSize) this.pageSize = pageSize;
 	else {
 		if (vertical) this.pageSize = height/5;
@@ -1072,7 +1187,7 @@ Scrollbar.prototype = {
 		var railX = parseInt(this.rail.getAttribute("x"));
 		var railY = parseInt(this.rail.getAttribute("y"));
 		var railHeight = parseInt(this.rail.getAttribute("height"));		
-		var railWidth = parseInt(this.rail.getAttribute("width"));
+		var railWidth = parseInt(this.rail.getAttribute("width"));		
 		var sliderHeight = parseInt(this.slider.getAttribute("height"));
 		var sliderWidth = parseInt(this.slider.getAttribute("width"));
 
@@ -1084,6 +1199,13 @@ Scrollbar.prototype = {
 			if (canvasCoords.x + sliderWidth > railX + railWidth) this.slider.setAttribute("x", railX + railWidth - sliderWidth);
 			else this.slider.setAttribute("x", canvasCoords.x);
 		}
+
+		var sliderX = parseInt(this.slider.getAttribute("x"));
+		var sliderY = parseInt(this.slider.getAttribute("y"));
+		var viewBox = this.scrollable.viewBox();
+		if (this.vertical) viewBox.y = parseInt((sliderY - railY) / railHeight * Idea.Conf.canvasHeight - Idea.Conf.canvasHeight/2);
+		else viewBox.x = parseInt((sliderX - railX) / railWidth * Idea.Conf.canvasWidth - Idea.Conf.canvasWidth/2);
+		this.scrollable.viewBox(viewBox);
 	},
 	sliderMouseDownHandler: function(e){
 		e.preventDefault();
@@ -1161,8 +1283,6 @@ Scrollbar.prototype = {
 			}
 
 			this.slider.setAttribute("y", sliderY + delta); // move slider
-
-			// TODO call setViewBox on scrollable
 		}
 		else {
 			if (delta > railWidth - (sliderX - railX) - sliderWidth) {
@@ -1173,8 +1293,12 @@ Scrollbar.prototype = {
 			}
 
 			this.slider.setAttribute("x", sliderX + delta); // redraw slider
-			// TODO call setViewBox on scrollable
 		}
+
+		var viewBox = this.scrollable.viewBox();
+		if (this.vertical) viewBox.y = parseInt((sliderY - railY) / railHeight * Idea.Conf.canvasHeight - Idea.Conf.canvasHeight/2);
+		else viewBox.x = parseInt((sliderX - railX) / railWidth * Idea.Conf.canvasWidth - Idea.Conf.canvasWidth/2);
+		this.scrollable.viewBox(viewBox);
 		//console.log("delta = " + delta);
 	},
 	sliderDragMouseUpHandler: function(e){
@@ -1321,8 +1445,8 @@ Scrollbar.prototype = {
 		}
 
 		var viewBox = this.scrollable.viewBox();
-		if (this.vertical) viewBox.y = viewBox.y + viewBox.height/100;
-		else viewBox.x = viewBox.x + viewBox.width/100;
+		if (this.vertical) viewBox.y = viewBox.y + this.scrollSize;
+		else viewBox.x = viewBox.x + this.scrollSize;
 		this.scrollable.viewBox(viewBox);
 	},
 	scrollBackward: function(){
@@ -1341,8 +1465,8 @@ Scrollbar.prototype = {
 		}
 
 		var viewBox = this.scrollable.viewBox();
-		if (this.vertical) viewBox.y = viewBox.y - viewBox.height/100;
-		else viewBox.x = viewBox.x - viewBox.width/100;
+		if (this.vertical) viewBox.y = viewBox.y - this.scrollSize;
+		else viewBox.x = viewBox.x - this.scrollSize;
 		this.scrollable.viewBox(viewBox);
 	},
 	pageForward: function(){},

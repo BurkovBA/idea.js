@@ -3,11 +3,15 @@
         SVGNS: "http://www.w3.org/2000/svg",
         XMLNS: "http://www.w3.org/1999/xhtml",
         XLINKNS: 'http://www.w3.org/1999/xlink',
-        MOUSE_EVENTS: ["click", "dblclick", "mousedown", "mousemove", "mouseout", "mouseover", "mouseup"],
+        MOUSE_EVENTS: ["click", "dblclick", "mousedown", "mousemove", "mouseout", "mouseover", "mouseup", "mouseenter", "mouseleave"],
         KEYBOARD_EVENTS: ["keydown", "keypress", "keyup"],
         UINTREGEX: /^\d+$/,
         INTREGEX: /^\-?\d+$/,
         isHexColor: function(color){return /^#[0-9A-F]{6}$/i.test(color)},
+
+        /*
+         * css class manipulation methods hasClass, addClass, removeClass
+         */
 
         // classList is available in ie8+ or ie10+ according to different sources; not in Opera Mini
         // thus we define jquery-like utility methods for manipulations with classes
@@ -32,6 +36,22 @@
             else
               element.className = element.className.replace(new RegExp('(^|\\b)' + className.split(' ').join('|') + '(\\b|$)', 'gi'), ' ');
         },
+
+        /*
+         * normalizeMouseEvent and normalizeKeyboardEvent address inconsistencies
+         * between event attributes in different browsers.
+         * 
+         * They take native browser events on input and return normalized event objects 
+         * (that contain the same properties for all browsers). These methods are meant 
+         * to be used in your event handlers, e.g.:
+         *
+         * function clickHandler(e){
+         *     var nativeEvent = Idea.Util.normalizeMouseEvent(e);
+         *     ... // something meaningful here should use nativeEvent
+         * }
+         *
+         * TODO: maintain a test set for cross-browser tests of these methods.
+         */
 
         normalizeMouseEvent: function(event){
             // ie has event undefined; instead, it has window.event
@@ -90,6 +110,116 @@
             }
             if (relatedTarget) normalizedEvent.relatedTarget = relatedTarget;
             return normalizedEvent;
+        },
+
+        /*
+         * This function normalizes messy keyboard events. 
+         *
+         * First, I'll tell about the keyboard events mess, then I'll tell, what this function does.
+         *
+         *   There are 2 kinds of events in browsers, my friend: keypress and keydown/keyup.
+         *   The difference is that character keys (alphanumeric and special symbols) when pressed 
+         *   fire both keypress and keydown events, while special keys (Ctrl, Esc, Enter etc.) cause
+         *   only keydown (no keypress) in most browsers except for special cases, such as 
+         *   buggy Escape in Opera firing keypress without data.
+         *   Both special and character keys cause keyup.
+         *   See: http://javascript.info/tutorial/keyboard-events
+         *
+         * What keyboard event attributes exist?
+         *
+         *  - type can equal to "keypress", "keydown" or "keyup";
+         *  - keyCode is an ASCII code (integer 0-255) of key on the keyboard;
+         *  - charCode is a UTF-8-encoded character (respecting the selected language and upper/lower case);
+         *  - which attribute equals to charCode, when it's available, otherwise to keyCode;
+         *  - ctrlKey, altKey, shiftKey and metaKey are booleans, indicating modifier keys states (on/off).
+         *
+         *   For some rare keys keyCodes vary between different browsers, but this
+         *   function doesn't address that problem by normalizing keyCodes in any ways.
+         *   See: https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/keyCode
+         *
+         * What attributes are reliably (cross-browser-ly) available for each event?
+         * 
+         *   For special keys, we can obtain keyCode, but not charCode of that key.
+         *
+         *   For character keys, we sometimes can't obtain keyCode thanks to IE, but
+         *   we can always obtain charCode.
+         *
+         * What this function does?
+         *
+         * This function expects all 3 types of keyboard events on input, 
+         * it checks if the key pressed is special or character and
+         *     - for special keys:
+         *         + for keypress events (mistkingly fired) returns null
+         *         + for keydown events sets the keyCode = which attributes
+         *         + for keyup events sets keyCode = which attributes
+         *     - for character keys
+         *         + for keypress events sets the charCode = which attributes
+         *         + for keydown events returns null
+         *         + for keyup events sets keyCode = which attributes         
+         *
+         */
+
+        normalizeKeyboardEvent: function(event){
+            // These links seem to be obsolete:
+            // see: http://javascript.info/tutorial/keyboard-events
+            // see: http://blog.santoshrajan.com/2007/03/cross-browser-keyboard-handler.html
+
+            var evt = event || window.event; // old ie has window.event
+
+            var normalizedEvent = {
+                nativeEvent: evt,
+                type: evt.type,
+                altKey: evt.altKey,
+                shiftKey: evt.shiftKey,
+                metaKey: evt.metaKey
+            };
+
+            // iterate over event types
+            if (evt.type == "keyup"){ // process keyup regardless of special/character key
+                normalizedEvent.keyCode = evt.keyCode;
+                normalizedEvent.which = evt.keyCode;
+                return normalizedEvent;
+            }
+            else if (evt.type == "keydown"){
+                // check if the key is special or character
+                // we can't do that like in keypress below, so we have to guess from keyCodes
+                var characterNotSpecial;
+                var keyCode = evt.keyCode;
+                if (keyCode == 32 || // spacebar
+                    (keyCode >= 48 && keyCode <= 90) || // alphanumerics
+                    (keyCode >= 96 && keyCode <= 111 && keyCode != 108) || // numpad
+                    (keyCode >= 160 && keyCode <= 176) || // special characters on numeric keyboard and right side
+                    (keyCode >= 188 && keyCode <= 192) || // comma, period, backtick, slash and 189 for variant of Minuse
+                    (keyCode >= 219 && keyCode <= 222)) { // backslash, square brackets, quotes etc.
+                    characterNotSpecial = true;
+                }
+                else characterNotSpecial = false;
+
+                if (characterNotSpecial) return null; // Already Handled on keydown
+                else {
+                    normalizedEvent.keyCode = evt.keyCode;
+                    normalizedEvent.which = evt.keyCode;
+                    return normalizedEvent;
+                }
+
+            }
+            else if (evt.type == "keypress") {
+                 // event.type must be keypress
+                if (evt.which == null) { // IE puts charCode into keyCode for character keys
+                    normalizedEvent.charCode = String.fromCharCode(evt.keyCode); // note that we can't get keyCode from IE
+                    normalizedEvent.which = normalizedEvent.charCode;
+                    return normalizedEvent;
+                } 
+                else if (evt.which !== 0 && evt.charCode !== 0) { // the rest
+                    normalizedEvent.charCode = String.fromCharCode(evt.which);
+                    normalizedEvent.which = normalizedEvent.charCode;
+                    return normalizedEvent;
+                }
+                else { // Opera triggers keyPress without charCode for e.g. Escape
+                    return null;
+                }
+            }
+
         },
 
         /*
@@ -175,7 +305,7 @@
          *
          * @method
          * @memberof Idea.Util
-         * @param father  svg element that is the parent of newly created one.
+         * @param father  svg element that is the parent of newly created one, or undefined/null.
          * @param tag     type of newly created svg element (e.g. 'rect' or 'g').
          * @param attrs   object with attributes of newly created element.
          * @returns       newly created element
@@ -183,14 +313,16 @@
          */
 
         createSVGElement: function(father, tag, attrs){
-            var elem = document.createElementNS(this.SVGNS, tag);
-            for (var key in attrs){
-                if (key == "xlink:href") {
-                    elem.setAttributeNS(this.XLINKNS, 'href', attrs[key]);
+            var elem = document.createElementNS(this.SVGNS, tag); // create element
+
+            for (var key in attrs){ // populate elem's attributes with hrefs created in XLINKS namespace
+                if (attrs[key] !== undefined) {
+                    if (key == "xlink:href") elem.setAttributeNS(this.XLINKNS, 'href', attrs[key]);
+                    else elem.setAttribute(key, attrs[key]);
                 }
-                else {elem.setAttribute(key, attrs[key]);}
             }
-            father.appendChild(elem);
+
+            if (father) father.appendChild(elem);
             return elem;
         },
 
@@ -227,9 +359,11 @@
         windowCoordsToCanvasCoords: function(x, y, canvas){
             // Note the difference between getBoundingClientRect() and getBBox():
             // http://stackoverflow.com/questions/6179173/how-is-the-getbbox-svgrect-calculated
+
             var canvasRectangle = canvas.getBoundingClientRect(); // this is relative to window - the browser viewport
-            var canvasTopOffset = y - canvasRectangle.top; // in window coordinates
-            var canvasLeftOffset = x - canvasRectangle.left; // in window coordinates
+
+            var canvasTopOffset = y - canvasRectangle.top - canvas.clientTop; // in window coordinates
+            var canvasLeftOffset = x - canvasRectangle.left - canvas.clientLeft; // in window coordinates
 
             var viewbox = canvas.getAttributeNS(null, 'viewBox');
             var viewboxDimensions = viewbox.split(" ");

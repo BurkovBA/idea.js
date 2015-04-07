@@ -64,7 +64,7 @@
         Idea.Util.createSVGElement(this.gridPattern, 'path', {d:"M 80 0 L 0 0 0 80", fill:"none", stroke: "#c0c0c0", "stroke-width": "1"});
 
         //this.grid = Idea.Util.createSVGElement(this._canvas, 'rect', {width:"100%", height: "100%", fill:"url(#gridPattern)"});
-        this.grid = Idea.Util.createSVGElement(this._canvas, 'rect', {x:Idea.Conf.canvasLeft, y:Idea.Conf.canvasTop, width:Idea.Conf.canvasWidth, height:Idea.Conf.canvasHeight, fill:"url(#gridPattern)"});
+        this.grid = Idea.Util.createSVGElement(this._canvas, 'rect', {x:Idea.Conf.canvasMinX, y:Idea.Conf.canvasMinY, width:(Idea.Conf.canvasMaxX - Idea.Conf.canvasMinX), height:(Idea.Conf.canvasMaxY - Idea.Conf.canvasMinY), fill:"url(#gridPattern)"});
 
         // TODO REMOVE THIS IT'S A TEST
         this.rect = Idea.Util.createSVGElement(this._canvas, 'rect', {
@@ -75,6 +75,12 @@
         });
         this.rect.style.stroke = "black";
         this.rect.style.fill = "none";
+
+        var text = Idea.Util.createSVGElement(this._canvas, 'text', {
+            "x":0, "y":0, "fill": '#000'
+        });
+        var textNode = document.createTextNode("(0, 0)");
+        text.appendChild(textNode);
 
         var another_rect = Idea.Util.createSVGElement(this._canvas, 'rect', {
             "x": -100,
@@ -114,6 +120,13 @@
                 viewBoxAttribute = viewBox.x + " " + viewBox.y + " " + viewBox.width + " " + viewBox.height;
                 this._canvas.setAttribute("viewBox", viewBoxAttribute);  //this._canvas.setAttributeNS(Idea.Util.SVGNS, "viewBox", viewBoxAttribute);
             }
+        },
+        addEventListener: function(eventType, listener, useCapture){
+            this._canvas.addEventListener(eventType, listener, useCapture);
+        },
+
+        removeEventListener: function(eventType, listener, useCapture){
+            this._canvas.removeEventListener(eventType, listener, useCapture);
         }
     };
 })();

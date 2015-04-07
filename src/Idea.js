@@ -75,26 +75,42 @@ Idea = function(){
         this._div.style.display = "inline-block";
         //document.body.appendChild(this._div);
 
+        this.layers = [];
+
         this.slides = [new this.Slide()]; // slides in correct order
         this._slide = this.slides[0]; // currently active slide
         this._mode = "view"; // "view" or "edit" mode
 
         this.gui = {};
 
-        this.svg = Idea.Util.createSVGElement(this._div, 'svg', {width: Idea.Conf.defaultViewportWidth+40, height: Idea.Conf.defaultViewportHeight+40});
+        //this.svg = Idea.Util.createSVGElement(this._div, 'svg', {width: , height: , viewBox: "0 0 " + (Idea.Conf.defaultViewportWidth+2*20) + " " + (Idea.Conf.defaultViewportHeight+2*20)});
+        this.canvasAndScrollbars = document.createElement('div');
+        this.canvasAndScrollbars.style.display = "inline-block";
+        this.canvasAndScrollbars.style.border = "1px soid black";
+        this.canvasAndScrollbars.style.width = Idea.Conf.defaultViewportWidth+2*20;
+        this.canvasAndScrollbars.style.height = Idea.Conf.defaultViewportHeight+2*20;
+        this.canvasAndScrollbars.id = "canvasAndScrollbars";
+
+        this.canvasAndVScrollbar = document.createElement('div');
+        this.canvasAndVScrollbar.style.display = "inline-block";
+        this.canvasAndVScrollbar.style.width = Idea.Conf.defaultViewportWidth+2*20;
+        this.canvasAndVScrollbar.style.height = Idea.Conf.defaultViewportHeight;
+        this.canvasAndVScrollbar.id = "canvasAndVScrollbar";
+        this.canvasAndScrollbars.appendChild(this.canvasAndVScrollbar);
+
         this.canvas = new this.Canvas(this);
-        this.svg.appendChild(this.canvas._canvas);
-        this.svg.style.display = "inline-block";
-        this.svg.style.border = "1px solid black";        
-        this._div.appendChild(this.svg);
+        this.canvasAndVScrollbar.appendChild(this.canvas._canvas);
 
-        var scrollbarPageSize = parseInt(Idea.Conf.canvasHeight / this.canvas.height());
-        var scrollbarScrollSize = parseInt(Idea.Conf.canvasHeight / this.canvas.height() / Idea.Conf.scrollbarScrollsPerPage);
-        this._vScrollbar = new this.Scrollbar(this.svg, this.canvas, this.svg.getAttribute("width")-40, 0, 40, this.svg.getAttribute("height")-40, true, null, null, scrollbarPageSize, scrollbarScrollSize);
+        var scrollbarWindowSize = Idea.Conf.defaultViewboxHeight;
+        var scrollbarScrollSize = Idea.Conf.defaultViewboxHeight / Idea.Conf.scrollbarScrollsPerPage;
+        this._vScrollbar = new this.Scrollbar(this.canvasAndVScrollbar, this.canvas, Idea.Conf.canvasMinY, Idea.Conf.canvasMaxY, scrollbarWindowSize, 0, scrollbarScrollSize, undefined, undefined, 40, Idea.Conf.defaultViewportHeight, true);
 
-        scrollbarPageSize = parseInt(Idea.Conf.canvasWidth / this.canvas.width());
-        scrollbarScrollSize = parseInt(Idea.Conf.canvasWidth / this.canvas.width() / Idea.Conf.scrollbarScrollsPerPage);
-        this._hScrollbar = new this.Scrollbar(this.svg, this.canvas, 0, this.svg.getAttribute("height")-40, this.svg.getAttribute("width")-40, 40, false, null, null, scrollbarPageSize, scrollbarScrollSize);
+        scrollbarWindowSize = Idea.Conf.defaultViewboxWidth;
+        scrollbarScrollSize = Idea.Conf.defaultViewboxWidth / Idea.Conf.scrollbarScrollsPerPage;
+        this._hScrollbar = new this.Scrollbar(this.canvasAndScrollbars, this.canvas, Idea.Conf.canvasMinX, Idea.Conf.canvasMaxX, scrollbarWindowSize, 0, scrollbarScrollSize, undefined, undefined, Idea.Conf.defaultViewportWidth, 40, false);
+
+        this._div.appendChild(this.canvasAndScrollbars);
+
 
         this.gui.tools = new this.Toolbar();
         this._div.appendChild(this.gui.tools._div);
@@ -170,22 +186,22 @@ Idea.Util = {};
 Idea.Conf = {};
 
 /*
- * Idea.ObjectsRegistry is a mapping {CathegoryName: Cathegory} or {Cathegory: Object}, where
+ * Idea.ObjectsRegistry is a mapping {Cathegory: Object}, where
  * cathegories are Strings (e.g. "Basic", "Electrical Engineering", "Linear Algebra" etc.) and
  * Objects are clickable objects, that user can create on the canvas, e.g. "Line", "Rectangle", 
  * "Vertex" (in graph-theoretical sense), "Oxygen" (as a graphical representation of atom in 
- * chemical formula). Cathegories can be nested, so that within "Linear Algebra" is nested in "Math".
+ * chemical formula).
  *
  */
 
-Idea.ObjectsRegistry = {};
+Idea.ObjectsRegistry = {"Basic": []};
 
 Idea.prototype = {
     mode: function(mode){
         if (mode === undefined) {return this._mode;}
         else {
-            if (mode == "view" || mode == "edit") {this._mode = mode;}
-            else {throw new Error("Wrong mode value: '" + mode + "', should be in ['view', 'edit']!");}
+            if (mode == "view" || mode == "edit" || mode == "creation") {this._mode = mode;}
+            else {throw new Error("Wrong mode value: '" + mode + "', should be in ['view', 'edit', 'creation']!");}
         }
     },
 

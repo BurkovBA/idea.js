@@ -100,10 +100,19 @@
 
 
         this.objectsMenu = document.createElement('div');
-        this.objectsTab.appendChild(this.objectsMenu);
+        this.objectsPage.appendChild(this.objectsMenu);
+
+        this.cathegoryObjects = document.createElement('div');
+        Idea.Util.addClass(this.cathegoryObjects, "cathegory-objects");
+        this.objectsPage.appendChild(this.cathegoryObjects);
+
+        for (var i=0; i<Idea.ObjectsRegistry["Basic"].length; i++){
+            var object = Idea.ObjectsRegistry["Basic"][i];
+            this.cathegoryObjects.appendChild(object.prototype.icon(this.idea));
+        }
 
         this.objectContext = document.createElement('div');
-        this.objectsTab.appendChild(this.objectContext);
+        this.objectsPage.appendChild(this.objectContext);
 
 
     };

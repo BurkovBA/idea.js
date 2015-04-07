@@ -6,7 +6,6 @@
     var rxGetterSetter = Idea.Util.uintGetterSetter("rx");
     var ryGetterSetter = Idea.Util.uintGetterSetter("ry");
 
-
     /*
      * Simple rectangle with content and/or with rounded corners.
      *
@@ -53,23 +52,61 @@
         constructor: Rectangle
     };
 
+    var icon = function(idea){
+        var svg = Idea.Util.createSVGElement(null, 'svg', {width: Idea.Conf.objectIconWidth, height: Idea.Conf.objectIconHeight});
+        var rect = Idea.Util.createSVGElement(svg, 'rect', {x: parseInt(Idea.Conf.objectIconWidth/10), y: parseInt(Idea.Conf.objectIconHeight/10), width: parseInt(Idea.Conf.objectIconWidth*8/10), height: parseInt(Idea.Conf.objectIconHeight*8/10), stroke: "#AAAAAA", fill:"#CCCCCC"});
+        var icon = document.createElement('button');
+        Idea.Util.addClass(icon, "icon")
+        icon.appendChild(svg);
 
-    Object.defineProperty(Idea.prototype.Slide.fn, "Rectangle", {
-        get: function(){
-            var binded_rectangle = Rectangle.bind(null, this);
-            binded_rectangle.fn = Rectangle.prototype;
-            binded_rectangle.cons = Rectangle;
-            return binded_rectangle;
+        icon._toggle = false;
+        icon.idea = idea;
+
+        icon.toggle = function(){
+            if (!icon._toggle) { // toggle is off - start creating a new object
+                icon.idea.mode('creation');
+                icon._toggle = true;
+                if (Idea.Util.hasClass(icon, "off")) Idea.Util.removeClass(icon, "off");
+                Idea.Util.addClass(icon, "on")
+            }
+            else { // on - cancel creation of object
+                icon.idea.mode("edit");
+                icon._toggle = false;
+                if (Idea.Util.hasClass(icon, "on")) Idea.Util.removeClass(icon, "on");
+                Idea.Util.addClass(icon, "off");
+            }
+
+        };
+
+        var iconClick = function(){
+            icon.toggle();
+            this.idea._bindedMouseClick = mouseClick.bind(this.idea);
+            this.idea.icon = this;
+            this.idea.canvas.addEventListener("click", this.idea._bindedMouseClick);
         }
-    });
 
-    Idea.Util.extend(Rectangle, Idea.prototype.Slide.fn.Widget);
-    Idea.Util.addAttrsToPrototype(Idea.prototype.Slide.fn.Arrow, {
+        icon.addEventListener("click", iconClick.bind(icon));
+
+        return icon;
+    };
+
+    var mouseClick = function(event){
+
+    };
+
+    Idea.Util.extend(Rectangle, Idea.Widget);
+    Idea.Util.addAttrsToPrototype(Rectangle, {
         x: xGetterSetter,
         y: yGetterSetter,
         width: widthGetterSetter,
         height: heightGetterSetter,
         rx: rxGetterSetter,
         ry: ryGetterSetter,
+        icon: icon
     });
+
+    Idea.Rectangle = Rectangle;
+    Idea.ObjectsRegistry["Basic"].push(Rectangle);
+
+
 })();

@@ -39,3 +39,21 @@
 .toolbar-page.active {
 	display: block;
 }
+
+.cathegory-objects {
+	margin-top: 10px;
+	margin-left: 10px;
+}
+
+.icon {
+	margin-left: 5px;
+	margin-top: 5px;
+	border-style: none;
+	background-color: rgb(43, 58, 66);
+	cursor: pointer;
+}
+
+.icon.on {
+	border-style: none;
+	background-color: rgb(52, 64, 71);
+}

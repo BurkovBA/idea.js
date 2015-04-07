@@ -128,36 +128,135 @@ var Scrollbar = function(father, scrollable, scrollableMin, scrollableMax, windo
 }
 
 Scrollbar.prototype = {
+	/**
+     * This is both getter and setter for scrollbar's slider coordinate in scrollbar.father's canvas coordinates. 
+     * If scrollbar is vertical, this is y coordinate, if horizontal - x coordinate.
+     *	
+     * @method
+     * @memberof Scrollbar
+     * @param value {int} coordinate you want to set for sliderMin
+     * @returns {int} coordinate of beginning of the scrollbar's slider.
+	 *
+	 */	
+	sliderMin: function(value){
+		if (value !== undefined){
+			if (!Idea.Util.INTREGEX.test(value)) {
+				throw TypeError("value for sliderMin should be integer, got: " + value);
+			}
+
+			if (value > this.sliderMax()) {
+				throw Error("You're trying to set sliderMin value greater than sliderMax - impossible! value = " + value + ", sliderMax = " + this.sliderMax());
+			}
+
+			if (this.vertical) this.slider.setAttribute("y", value);
+			else this.slider.setAttribute("x", value);
+		}
+
+		if (this.vertical) return parseInt(this.slider.getAttribute("y"));
+		else return parseInt(this.slider.getAttribute("x"));
+	},
+
+	/**
+     * This is both getter and setter for scrollbar's slider coordinate in scrollbar.father's canvas coordinates. 
+     * If scrollbar is vertical, this is y coordinate, if horizontal - x coordinate.
+     *
+     * @method
+     * @memberof Scrollbar
+     * @param value {int} coordinate you want to set for sliderMax
+     * @returns {int} coordinate of ending of the scrollbar's slider.
+	 *
+	 */	
+	sliderMax: function(value){
+		if (value !== undefined){
+			if (!Idea.Util.INTREGEX.test(value)) {
+				throw TypeError("value for sliderMax should be integer, got: " + value);
+			}
+
+			if (value < this.sliderMin()) {
+				throw Error("You're trying to set sliderMax value smaller than sliderMin - impossible! value = " + value + ", sliderMin = " + this.sliderMin());
+			}
+
+			if (this.vertical) this.slider.setAttribute("height", value - this.sliderMin());
+			else this.slider.setAttribute("width", value - this.sliderMin());
+		}
+
+		var size;
+		if (this.vertical) size = parseInt(this.slider.getAttribute("height"));
+		else size = parseInt(this.slider.getAttribute("width"));
+		return this.sliderMin() + size;
+	},
+
+	/**
+     * This is getter for scrollbar's rail minimal coordinate in scrollbar.father's canvas coordinates. 
+     * If scrollbar is vertical, this is y coordinate, if horizontal - x coordinate.	 
+	 *
+     * @method
+     * @memberof Scrollbar
+     * @returns {int} coordinates of beginning of the scrollbar's rail in father's canvas coordinates.
+	 *
+	 */
+	railMin: function(){
+		if (this.vertical) return parseInt(this.rail.getAttribute("y"));
+		else return parseInt(this.rail.getAttribute("x"));
+	},
+
+	/**
+     * This is getter for scrollbar's rail maximal coordinate in scrollbar.father's canvas coordinates. 
+     * If scrollbar is vertical, this is y coordinate, if horizontal - x coordinate.	 
+     *	
+     * @method
+     * @memberof Scrollbar
+     * @returns {int} coordinates of ending of the scrollbar's rail in father's canvas coordinates.
+	 *
+	 */
+	railMax: function(){
+		var size;
+		if (this.vertical) size = parseInt(this.rail.getAttribute("height"));
+		else size = parseInt(this.rail.getAttribute("width"));
+		return this.railMin() + size;
+	},
+
+	/**
+	 * This event handler moves scrollbar's slider start to the position on the rail, where click occured.
+	 * Slider is not resized. If click is too close to the end of the rail for the whole slider to fit in,
+	 * it just docks slider to the end of the rail without resizing it.
+	 *
+	 * @method
+	 * @member of Scollbar
+	 */
+
 	railClickHandler: function(e){
 		e.preventDefault();
 		e.stopPropagation();
 
 		var event = Idea.Util.normalizeMouseEvent(e);
+		if (event.which != 1) return; // check that it's left mouse button, else ignore event		
 		var canvasCoords = Idea.Util.windowCoordsToCanvasCoords(event.clientX, event.clientY, this.scrollbar);
 
-		var railX = parseInt(this.rail.getAttribute("x"));
-		var railY = parseInt(this.rail.getAttribute("y"));
-		var railHeight = parseInt(this.rail.getAttribute("height"));		
-		var railWidth = parseInt(this.rail.getAttribute("width"));		
-		var sliderHeight = parseInt(this.slider.getAttribute("height"));
-		var sliderWidth = parseInt(this.slider.getAttribute("width"));
+		var newSliderMin; // get coordinates of new slider position from the event
+		if (this.vertical) newSliderMin = canvasCoords.y;
+		else newSliderMin = canvasCoords.x;
 
-		if (this.vertical){
-			if (canvasCoords.y + sliderHeight > railY + railHeight) this.slider.setAttribute("y", railY + railHeight - sliderHeight);
-			else this.slider.setAttribute("y", canvasCoords.y);
+		var sliderSize = this.sliderMax() - this.sliderMin();
+
+		// If click is too close to the end of rail to fit the whole slider size,
+		// just dock the slider to the end of the rail without changing its size.
+		if (newSliderMin + sliderSize > this.railMax()) {
+			this.sliderMin(this.railMax() - sliderSize);
+			this.sliderMax(this.railMax());
 		}
 		else {
-			if (canvasCoords.x + sliderWidth > railX + railWidth) this.slider.setAttribute("x", railX + railWidth - sliderWidth);
-			else this.slider.setAttribute("x", canvasCoords.x);
+			this.sliderMin(newSliderMin);
+			this.sliderMax(newSliderMin + sliderSize);
 		}
 
-		var sliderX = parseInt(this.slider.getAttribute("x"));
-		var sliderY = parseInt(this.slider.getAttribute("y"));
+		// move the associated scrollable's window (i.e. viewBox) accordingly
 		var viewBox = this.scrollable.viewBox();
-		if (this.vertical) viewBox.y = parseInt(Idea.Conf.canvasMinY + (sliderY - railY) / railHeight * (Idea.Conf.canvasMaxY - Idea.Conf.canvasMinY));
-		else viewBox.x = parseInt(Idea.Conf.canvasMinX + (sliderX - railX) / railWidth * (Idea.Conf.canvasMaxX - Idea.Conf.canvasMinX));
+		if (this.vertical) viewBox.y = parseInt(Idea.Conf.canvasMinY + (this.sliderMin() - this.railMin()) / (this.railMax() - this.railMin) * (Idea.Conf.canvasMaxY - Idea.Conf.canvasMinY));
+		else viewBox.x = parseInt(Idea.Conf.canvasMinX + (this.sliderMin() - this.railMin()) / (this.railMax() - this.railMin()) * (Idea.Conf.canvasMaxX - Idea.Conf.canvasMinX));
 		this.scrollable.viewBox(viewBox);
 	},
+
 	sliderMouseDownHandler: function(e){
 		e.preventDefault();
 		e.stopPropagation();

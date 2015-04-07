@@ -144,10 +144,6 @@ Scrollbar.prototype = {
 				throw TypeError("value for sliderMin should be integer, got: " + value);
 			}
 
-			if (value > this.sliderMax()) {
-				throw Error("You're trying to set sliderMin value greater than sliderMax - impossible! value = " + value + ", sliderMax = " + this.sliderMax());
-			}
-
 			if (this.vertical) this.slider.setAttribute("y", value);
 			else this.slider.setAttribute("x", value);
 		}
@@ -170,10 +166,6 @@ Scrollbar.prototype = {
 		if (value !== undefined){
 			if (!Idea.Util.INTREGEX.test(value)) {
 				throw TypeError("value for sliderMax should be integer, got: " + value);
-			}
-
-			if (value < this.sliderMin()) {
-				throw Error("You're trying to set sliderMax value smaller than sliderMin - impossible! value = " + value + ", sliderMin = " + this.sliderMin());
 			}
 
 			if (this.vertical) this.slider.setAttribute("height", value - this.sliderMin());
@@ -252,7 +244,7 @@ Scrollbar.prototype = {
 
 		// move the associated scrollable's window (i.e. viewBox) accordingly
 		var viewBox = this.scrollable.viewBox();
-		if (this.vertical) viewBox.y = parseInt(Idea.Conf.canvasMinY + (this.sliderMin() - this.railMin()) / (this.railMax() - this.railMin) * (Idea.Conf.canvasMaxY - Idea.Conf.canvasMinY));
+		if (this.vertical) viewBox.y = parseInt(Idea.Conf.canvasMinY + (this.sliderMin() - this.railMin()) / (this.railMax() - this.railMin()) * (Idea.Conf.canvasMaxY - Idea.Conf.canvasMinY));
 		else viewBox.x = parseInt(Idea.Conf.canvasMinX + (this.sliderMin() - this.railMin()) / (this.railMax() - this.railMin()) * (Idea.Conf.canvasMaxX - Idea.Conf.canvasMinX));
 		this.scrollable.viewBox(viewBox);
 	},

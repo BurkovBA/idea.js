@@ -34,6 +34,65 @@
         }
     });
 
+    /**
+     *
+     * icon represents an Object=Widget on the objects creation bar of toolbar (so, it actually
+     * is a button). By pressing it, you activate "creation" mode of idea object and can visually
+     * create the corresponding object.
+     *
+     * @param idea {Object}
+     * @param handlers {Array} - each element is a list [object, eventType, listener, bubbles]. Upon
+     * click on the icon, it calls object.addEventListener(eventType, listener, bubbles) for all elements
+     * of the list.
+     * @param label {dom} - label to be displayed on your icon, its width/height should equal to Idea.Conf.objectIconWidth/Height
+     *
+     */
+
+    var Icon = function(idea, handlers, label){
+        this.idea = idea;
+        this.icon = document.createElement('button');
+        this.icon.appendChild(label);
+        Idea.Util.addClass(this.icon, "icon");
+
+        this._toggle = false;
+        
+        this.handlers = handlers;
+        this.icon.addEventListener("click", this.click.bind(this), false);
+    };
+
+    Icon.prototype = {
+        constructor: Icon,
+        toggle: function(){
+            if (!this._toggle) { // toggle is off - start creating a new object
+                this.idea.mode('creation');
+                this._toggle = true;
+                if (Idea.Util.hasClass(this.icon, "off")) Idea.Util.removeClass(this.icon, "off");
+                Idea.Util.addClass(this.icon, "on")
+            }
+            else { // on - cancel creation of object
+                this.idea.mode("edit");
+                this._toggle = false;
+                if (Idea.Util.hasClass(this.icon, "on")) Idea.Util.removeClass(this.icon, "on");
+                Idea.Util.addClass(this.icon, "off");
+            }
+        },
+        click: function(){
+            this.toggle();
+            for (var i=0; i<this.handlers.length; i++){
+                var handler = this.handlers[i];
+                this.idea.canvas.addEventListener(handler[0], handler[1], handler[2], true);
+                this.idea.icon = this;
+            }
+        }
+    };
+
+    Object.defineProperty(Idea.prototype, "Icon", {
+        get: function(){
+            return Icon.bind(null, this);
+        }
+    });
+
+
     var Toolbar = function(idea){
     	this.idea = idea;
         this._div = document.createElement('div');
@@ -107,8 +166,9 @@
         this.objectsPage.appendChild(this.cathegoryObjects);
 
         for (var i=0; i<Idea.ObjectsRegistry["Basic"].length; i++){
-            var object = Idea.ObjectsRegistry["Basic"][i];
-            this.cathegoryObjects.appendChild(object.prototype.icon(this.idea));
+            var obj = Idea.ObjectsRegistry["Basic"][i];
+            var icon = new idea.Icon(obj.prototype.iconHandlers, obj.prototype.iconLabel);
+            this.cathegoryObjects.appendChild(icon.icon);
         }
 
         this.objectContext = document.createElement('div');
@@ -125,5 +185,4 @@
             return Toolbar.bind(null, this);
         }
     });
-
 })();

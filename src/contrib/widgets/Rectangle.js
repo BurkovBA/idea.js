@@ -52,43 +52,10 @@
         constructor: Rectangle
     };
 
-    var icon = function(idea){
-        var svg = Idea.Util.createSVGElement(null, 'svg', {width: Idea.Conf.objectIconWidth, height: Idea.Conf.objectIconHeight});
-        var rect = Idea.Util.createSVGElement(svg, 'rect', {x: parseInt(Idea.Conf.objectIconWidth/10), y: parseInt(Idea.Conf.objectIconHeight/10), width: parseInt(Idea.Conf.objectIconWidth*8/10), height: parseInt(Idea.Conf.objectIconHeight*8/10), stroke: "#AAAAAA", fill:"#CCCCCC"});
-        var icon = document.createElement('button');
-        Idea.Util.addClass(icon, "icon")
-        icon.appendChild(svg);
+    var iconLabel = Idea.Util.createSVGElement(null, 'svg', {width: Idea.Conf.objectIconWidth, height: Idea.Conf.objectIconHeight});
+    var rect = Idea.Util.createSVGElement(iconLabel, 'rect', {x: parseInt(Idea.Conf.objectIconWidth/10), y: parseInt(Idea.Conf.objectIconHeight/10), width: parseInt(Idea.Conf.objectIconWidth*8/10), height: parseInt(Idea.Conf.objectIconHeight*8/10), stroke: "#AAAAAA", fill:"#CCCCCC"});
 
-        icon._toggle = false;
-        icon.idea = idea;
-
-        icon.toggle = function(){
-            if (!icon._toggle) { // toggle is off - start creating a new object
-                icon.idea.mode('creation');
-                icon._toggle = true;
-                if (Idea.Util.hasClass(icon, "off")) Idea.Util.removeClass(icon, "off");
-                Idea.Util.addClass(icon, "on")
-            }
-            else { // on - cancel creation of object
-                icon.idea.mode("edit");
-                icon._toggle = false;
-                if (Idea.Util.hasClass(icon, "on")) Idea.Util.removeClass(icon, "on");
-                Idea.Util.addClass(icon, "off");
-            }
-
-        };
-
-        var iconClick = function(){
-            icon.toggle();
-            this.idea._bindedMouseClick = mouseClick.bind(this.idea);
-            this.idea.icon = this;
-            this.idea.canvas.addEventListener("click", this.idea._bindedMouseClick);
-        }
-
-        icon.addEventListener("click", iconClick.bind(icon));
-
-        return icon;
-    };
+    var iconHandlers = [];
 
     var mouseClick = function(event){
 
@@ -102,7 +69,8 @@
         height: heightGetterSetter,
         rx: rxGetterSetter,
         ry: ryGetterSetter,
-        icon: icon
+        iconHandlers: iconHandlers,
+        iconLabel: iconLabel
     });
 
     Idea.Rectangle = Rectangle;

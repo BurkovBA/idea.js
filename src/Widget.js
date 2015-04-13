@@ -15,12 +15,14 @@
             keypress: function(){},
             keyup: function(){},
         };
-        this.signals = {
-        };
     };
 
     Widget.prototype = {
         constructor: Widget,
+        destroy: function(){
+            this.father.removeChild(this._group);
+            delete this._drawing;
+        }
     };
 
     Idea.Widget = Widget;

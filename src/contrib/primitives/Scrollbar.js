@@ -289,7 +289,6 @@ Scrollbar.prototype = {
 			window.addEventListener('mousemove', this._bindedSliderMaxResizeMouseMoveHandler, false);
 		}
 		else { // if middle
-			console.log("MouseDown in the middle of slider");
 			// attach mouse handlers to window, not document.documentElement (representing <html>)
 			// or mouse events beyond the browser window will be lost
 			this._bindedMouseUpHandler = this.sliderDragMouseUpHandler.bind(this);
@@ -384,15 +383,11 @@ Scrollbar.prototype = {
 		if (this.vertical) {coord = canvasCoords.y;}
 		else {coord = canvasCoords.x;}
 
-		console.log("coord = " + coord);
-
 		if (coord < this.railMin()) { // sliderMin shouldn't be less than railMin
 			coord = this.railMin();
-			console.log("coord less than railMin, coord = " + coord);
 		} 
 		else if (coord >= this.sliderMax()) { // sliderMin shouldn't be too close to sliderMax
 			coord = this.sliderMax() - 1;
-			console.log("coord greater than sliderMax, coord = " + coord);		
 		}
 		
 		this.sliderMin(coord);
@@ -438,8 +433,6 @@ Scrollbar.prototype = {
 		var coord;
 		if (this.vertical) {coord = canvasCoords.y;}
 		else {coord = canvasCoords.x;}
-
-		console.log("coord = " + coord);
 
 		if (coord > this.railMax()) { // sliderMin shouldn't be less than railMin
 			coord = this.railMax();

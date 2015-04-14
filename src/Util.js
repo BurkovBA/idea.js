@@ -117,7 +117,7 @@
          *
          * First, I'll tell about the keyboard events mess, then I'll tell, what this function does.
          *
-         *   There are 2 kinds of events in browsers, my friend: keypress and keydown/keyup.
+         *   There are 2 kinds of keyboard events in browsers, my friend: keypress and keydown/keyup.
          *   The difference is that character keys (alphanumeric and special symbols) when pressed 
          *   fire both keypress and keydown events, while special keys (Ctrl, Esc, Enter etc.) cause
          *   only keydown (no keypress) in most browsers except for special cases, such as 
@@ -130,7 +130,7 @@
          *  - type can equal to "keypress", "keydown" or "keyup";
          *  - keyCode is an ASCII code (integer 0-255) of key on the keyboard;
          *  - charCode is a UTF-8-encoded character (respecting the selected language and upper/lower case);
-         *  - which attribute equals to charCode, when it's available, otherwise to keyCode;
+         *  - which is an attribute that equals to charCode, when it's available, otherwise to keyCode;
          *  - ctrlKey, altKey, shiftKey and metaKey are booleans, indicating modifier keys states (on/off).
          *
          *   For some rare keys keyCodes vary between different browsers, but this
@@ -391,14 +391,76 @@
          * call widget.opacity(value), it first validates the value, i.e. 
          * checks that it is between 0 and 1, before assigning opacity to it.
          *
+         * Observers: what's more is that each getterSetters keeps a list
+         * of callback functions, called observers, which getterSetter calls 
+         * before setting a new value with a signature:
+         *
+         * observer(newValue, oldValue).
+         *
          * In order to re-use the simplest and most common getterSetters, 
          * we store factory functions, generating them, here.
          */ 
 
+
+        /*
+         * Objects that use getterSetters, store observer functions somewhere. 
+         * This convenience function abstracts out location of this storage. 
+         * It returns list of ovservers of subject's property called propertyName.
+         * E.g. when you say:
+         *
+         * var subject = new SubjectConstructor(someArgs);
+         * subject.color('#AAAAAA');
+         *
+         * color is a getterSetter, which when invoked as a setter, iterates 
+         * over all the observers, returned by Idea.Util.observers(subject),
+         * and calls them.
+         */
+
+        observers: function(subject, propertyName){
+            // create observers storage if it doesn't exist
+            if (!subject.hasOwnProperty("_" + propertyName + "Observers")){
+                subject["_" + propertyName + "Observers"] = [];
+            }
+
+            return  subject["_" + propertyName + "Observers"];
+        },
+
+        callObservers: function(subject, propertyName, newValue){
+            Idea.Util.observers(subject, propertyName).forEach(
+                function(observer, index, observers){
+                    var oldValue = subject[propertyName]();
+                    observer(newValue, oldValue);
+                });
+        },
+
+        /*
+         * Connects observer callback to subject's property, defined by a getterSetter.
+         * E.g.:
+         *
+         * Idea.Util.observe(subject, 'color', function(newValue, oldValue){
+         *    console.log("subject's color changed from " + oldValue + "to " + newValue);
+         * });
+         * 
+         * will log changes of color to console upon subject.color("#AAAAAA").
+         */
+
+        observe: function(subject, propertyName, observer){
+            Idea.Util.observers(subject, propertyName).push(observer);
+        },
+
+        /*
+         * Disconnects observer callback from subject's property, defined by a getterSetter.
+         */
+
+        unobserve: function(subject, propertyName, observer){
+            Idea.Util.observers(subject, propertyName).pop(observer);
+        },
+
         /*
          * Factory function that returns getterSetter function, which,
          * as getter, returns value of argName or, as setter, validates
-         * input value, checking, if it's an unsigned integer.
+         * input value (checks, if it's an unsigned integer), calls observers
+         * and assigns input value to argName.
          * 
          * @function
          * @memberof Idea.Util
@@ -409,14 +471,26 @@
             return function(arg){
                 if (arg === undefined) {return this["_"+argName];}
                 else {
-                    Idea.Util.uintValidator(arg, argName);
-                    this["_"+argName] = arg;
+                    Idea.Util.uintValidator(arg, argName); // validate new value, throw exception if it's wrong
+                    Idea.Util.callObservers(this, argName, arg);
+                    this["_"+argName] = arg; // assign new value
                 }
             };
         },
 
         uintValidator: function(arg, argName){
             if (!Idea.Util.UINTREGEX.test(arg)) throw new Error(argName + " should be unsigned int, got: '" + arg + "'!");
+        },
+
+        intGetterSetter: function(argName){
+            return function(arg){
+                if (arg === undefined) {return this["_"+argName];}
+                else {
+                    Idea.Util.intValidator(arg, argName);
+                    Idea.Util.callObservers(this, argName, arg);                    
+                    this["_"+argName] = arg;
+                }
+            };
         },
 
         intValidator: function(arg, argName){
@@ -438,7 +512,10 @@
             return function(arg){
                 if (arg === undefined) {return this["_"+argName];}
                 else {
-                    if (Idea.Util.isHexColor(arg)){ this["_"+argName] = arg;}
+                    if (Idea.Util.isHexColor(arg)){
+                        Idea.Util.callObservers(this, argName, arg);                        
+                        this["_"+argName] = arg;
+                    }
                     else {
                         throw new Error(argName + " should be a valid color string, e.g #ACDC66, got: '" + arg + "'!");
                     }
@@ -460,7 +537,10 @@
             return function(arg){
                 if (arg === undefined) {return this["_"+argName];}
                 else {
-                    if (arg instanceof Idea.prototype.Widget) {this["_"+argName] = arg;}
+                    if (arg instanceof Idea.prototype.Widget) {
+                        Idea.Util.callObservers(this, argName, arg);                        
+                        this["_"+argName] = arg;
+                    }
                     else {throw new Error(argName + "should be a Util.prototype.Widget subclass, got:'" + typeof arg + "'!");}
                 }
             };

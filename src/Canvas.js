@@ -1,9 +1,13 @@
 /*
- * Canvas is an infinite flat area, and user looks
- * at it through a finite viewport (part of browser window), while
+ * Canvas is a flat area, and user looks
+ * at it through a viewport (part of browser window), while
  * the part of canvas under the viewport is called viewBox.
  * Viewport can zoom in and out. Its size is specified as an input
- * parameter to idea.Canvas.
+ * parameter to idea.Canvas. Theoretically canvas could've been infinite,
+ * but it's inconvenient to work with infinite canvas, cause we don't
+ * know the proportion of viewBox to the whole canvas, which should
+ * be reflected by proportion of scrollbar's slider to whole scrollbar.
+ * Thus, we set arbitrary values for canvas size in Conf.js.
  *
  * ........  <-- the big thing, denoted with . is the whole canvas
  * ........

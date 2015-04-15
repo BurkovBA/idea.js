@@ -140,7 +140,7 @@
     var keyDown = function(e){
         var event = Idea.Util.normalizeKeyboardEvent(e);
         if (event == null) return; // just ignore this event, if it should be ignored
-        if (event.type == "keydown" && event.keyCode == 27) { // if this is keydown event on Escape key, destroy this Line and return to edit mode
+        if (event.type == "keydown" && event.keyCode == 27) { // if this is keydown event on Escape key, destroy this Widget and return to edit mode
             this._new.destroy();
             returnFromRectCreation.bind(this)();
         }

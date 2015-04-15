@@ -523,6 +523,16 @@
             };
         },
 
+        stringGetterSetter: function(argName){
+            return function(arg){
+                if (arg === undefined) {return this["_"+argName];}
+                else {
+                    Idea.Util.callObservers(this, argName, String(arg));
+                    this["_"+argName] = String(arg);
+                }
+            }
+        },
+
         /*
          * Factory function that returns getterSetter function, which,
          * as getter, returns value of argName or, as setter, validates

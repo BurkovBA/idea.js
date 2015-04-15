@@ -1,41 +1,11 @@
 (function(){
+    var x1GetterSetter = Idea.Util.intGetterSetter("x1");
+    var y1GetterSetter = Idea.Util.intGetterSetter("y1");
+    var x2GetterSetter = Idea.Util.intGetterSetter("x2");
+    var y2GetterSetter = Idea.Util.intGetterSetter("y2");
+    var strokeGetterSetter = Idea.Util.colorGetterSetter("stroke");
+    var strokeWidthGetterSetter = Idea.Util.uintGetterSetter("strokeWidth");
 
-    var widthGetterSetter = Idea.Util.uintGetterSetter("width");
-    var colorGetterSetter = Idea.Util.colorGetterSetter("color");
-    var baseGetterSetter = function(base){
-        if (base === undefined) {return this._base}
-        else {
-            if (base.hasOwnProperty("x") && Idea.Util.INTREGEX.test(base.x) && base.hasOwnProperty("y") && Idea.Util.INTREGEX.test(base.y)){
-                this._base = base;
-
-                // draw changes
-                if (this._drawing){
-                    this._drawing.setAttribute("x1", base.x);
-                    this._drawing.setAttribute("y1", base.y);
-                }
-            }//TODO TEST CANVAS SIZE
-            else {
-                throw Error("Wrong line base =" + JSON.stringify(base));
-            }            
-        }
-    };
-    var tipGetterSetter = function(tip){
-        if (tip === undefined) {return this._tip}
-        else {
-            if (tip.hasOwnProperty("x") && Idea.Util.INTREGEX.test(tip.x) && tip.hasOwnProperty("y") && Idea.Util.INTREGEX.test(tip.y)){
-                this._tip = tip;
-
-                // draw changes
-                if (this._drawing){
-                    this._drawing.setAttribute("x2", tip.x);
-                    this._drawing.setAttribute("y2", tip.y);
-                }
-            }//TODO TEST CANVAS SIZE
-            else {
-                throw Error("Wrong line tip = " + JSON.stringify(tip));
-            }
-        }
-    };
     var baseMarkerGetterSetter = Idea.Util.widgetGetterSetter("baseMarker");
     var tipMarkerGetterSetter = Idea.Util.widgetGetterSetter("tipMarker");
 
@@ -49,32 +19,32 @@
      * @param father      Util.Widget, parental to Line, or Canvas,
      *                    if Line doesn't have a parent and is drawn right
                           on the canvas.
-     * @param width       width of line, defaults to 1px.
-     * @param color       color of line, defaults to black.
-     * @param base        coordinates of line's base, e.g.{x:42, y:42}.
-     * @param tip         coordinates of line's tip, e.g. {x:42, y:42}.
+     * @param x1
+     * @param y1
+     * @param x2
+     * @param y2
+     * @param stroke
+     * @param strokeWidth
      * @param baseMarker see tipMarker.
      * @param tipMarker  arbitrary markers that represent base and tip of 
      *                    line (if not specified, Triangles will be 
      *                    created and used by default).
      */
 
-    var Line = function(owner, father, width, color, base, tip, baseMarker, tipMarker){
-        if (width === undefined) widthGetterSetter.call(this, 1);
-        else widthGetterSetter.call(this, width);
-
-        if (color === undefined) colorGetterSetter.call(this, "#AAAAAA");
-        else colorGetterSetter.call(this, color);
-
+    var Line = function(owner, father, x1, y1, x2, y2, stroke, strokeWidth, baseMarker, tipMarker){
         // TODO allow to use other widgets dock points to be used 
         // as base and tip instead of just coordinates. Then line will
         // stick to widgets.
+        x1GetterSetter.call(this, x1);
+        y1GetterSetter.call(this, y1);
+        x2GetterSetter.call(this, x2);
+        y2GetterSetter.call(this, y2);
 
-        if (base === undefined) throw new Error("Line's base coordinates undefined!");
-        else baseGetterSetter.call(this, base);
+        if (stroke === undefined) strokeGetterSetter.call(this, "#AAAAAA");
+        else strokeGetterSetter.call(this, stroke);        
 
-        if (tip === undefined) throw new Error("Line's tip coordinates undefined!");
-        else tipGetterSetter.call(this, tip);
+        if (strokeWidth === undefined) strokeWidthGetterSetter.call(this, 1);
+        else strokeWidthGetterSetter.call(this, strokeWidth);
 
         if (baseMarker === undefined) this._baseMarker = null;
         else baseMarkerGetterSetter.call(this, baseMarker);
@@ -87,13 +57,23 @@
 
         this._group = Idea.Util.createSVGElement(this.father, 'g', {});
         this._drawing = Idea.Util.createSVGElement(this._group, 'line', {
-            "x1": this._base.x,
-            "y1": this._base.y,
-            "x2": this._tip.x,
-            "y2": this._tip.y
+            "x1": this.x1(),
+            "y1": this.y1(),
+            "x2": this.x2(),
+            "y2": this.y2(),
+            "stroke": this.stroke(),
+            "stroke-width": this.strokeWidth()
         });
         this._drawing.style.stroke = this._color;
         this._drawing.style['stroke-width'] = this.width;
+
+        Idea.Util.observe(this, "x1", function(newValue, oldValue){this._drawing.setAttribute("x1", newValue);}.bind(this));
+        Idea.Util.observe(this, "y1", function(newValue, oldValue){this._drawing.setAttribute("y1", newValue);}.bind(this));
+        Idea.Util.observe(this, "x2", function(newValue, oldValue){this._drawing.setAttribute("x2", newValue);}.bind(this));
+        Idea.Util.observe(this, "y2", function(newValue, oldValue){this._drawing.setAttribute("y2", newValue);}.bind(this));
+        Idea.Util.observe(this, "stroke", function(newValue, oldValue){this._drawing.setAttribute("stroke", newValue);}.bind(this));
+        Idea.Util.observe(this, "strokeWidth", function(newValue, oldValue){this._drawing.setAttribute("stroke-width", newValue);}.bind(this));
+
     };
 
     /*
@@ -111,7 +91,7 @@
         var canvasCoords = Idea.Util.windowCoordsToCanvasCoords(event.clientX, event.clientY, this.canvas._canvas);
 
         // draw the base on canvas
-        this._new = new Line(this, this.canvas._canvas, 1, "#000000", canvasCoords, canvasCoords);
+        this._new = new Line(this, this.canvas._canvas, canvasCoords.x, canvasCoords.y, canvasCoords.x, canvasCoords.y, "#000000", 1);
 
         // remove this listener and add mouseover, mouseclick and keydown handlers
         this.canvas.removeEventListener("click", baseMouseClick, false, true);
@@ -148,7 +128,8 @@
         var canvasCoords = Idea.Util.windowCoordsToCanvasCoords(event.clientX, event.clientY, this.canvas._canvas);
         //console.log("event.clientX = ", event.clientX, "event.clientY = ", event.clientY);        
         //console.log("canvas coords relative to this.canvas._canvas = ", canvasCoords);
-        this._new.tip(canvasCoords);
+        this._new.x2(canvasCoords.x);
+        this._new.y2(canvasCoords.y);
     };
 
     var tipKeyDown = function(e){
@@ -175,10 +156,12 @@
 
     Idea.Util.extend(Line, Idea.Widget);
     Idea.Util.addAttrsToPrototype(Line, {
-        width: widthGetterSetter, 
-        color: colorGetterSetter,
-        base: baseGetterSetter,
-        tip: tipGetterSetter,
+        x1: x1GetterSetter, 
+        y1: y1GetterSetter,
+        x2: x2GetterSetter,
+        y2: y2GetterSetter,
+        stroke: strokeGetterSetter,
+        strokeWidth: strokeWidthGetterSetter,
         baseMarker: baseMarkerGetterSetter,
         tipMarker: tipMarkerGetterSetter,
         iconHandlers: iconHandlers,

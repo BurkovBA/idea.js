@@ -92,6 +92,53 @@
         }
     });
 
+    /**
+    *
+    * Context represents the state of edited or created widget. E.g. for a Line it contains
+    * its x1, y1, x2, y2 coordinates, stroke, strokeWidth etc.
+    *
+    */
+
+    var Context = function(idea){
+        this.idea = idea;
+        this._div = document.createElement('div');
+    };
+
+    Context.prototype = {
+        constructor: Context,
+
+        /*
+         * Change is meant to be listening to idea.selection() for possible changes.
+         */
+
+        change: function(newValue, oldValue){
+            if (newValue.length === 1) {
+                for (var element in this.newValue.getterSetters()){
+                    var contextWidgetConstructors = Idea.Util.contextWidgets(element.getterType);
+                    var contextWidgets = [];
+                    contextWidgetConstructors.forEach(function(el, index, array){
+                        
+                    }.bind(this));
+                }
+                    
+            }
+            else {
+                this.destroy(oldValue);
+            }
+        },
+
+        destroy: function(selection){
+            selection.forEach(function(obj, index, array){
+                this.contextWidgets[obj]
+            });
+        }
+    };
+
+    Object.defineProperty(Idea.prototype, "Context", {
+        get: function(){
+            return Context.bind(null, this);
+        }
+    });
 
     var Toolbar = function(idea){
     	this.idea = idea;

@@ -1,12 +1,12 @@
 (function(){
-    var xGetterSetter = Idea.Util.intGetterSetter("x");
-    var yGetterSetter = Idea.Util.intGetterSetter("y");
-    var widthGetterSetter = Idea.Util.intGetterSetter("width");
-    var heightGetterSetter = Idea.Util.intGetterSetter("height");
-    var rxGetterSetter = Idea.Util.uintGetterSetter("rx");
-    var ryGetterSetter = Idea.Util.uintGetterSetter("ry");
-    var strokeGetterSetter = Idea.Util.colorGetterSetter("stroke");
-    var fillGetterSetter = Idea.Util.colorGetterSetter("fill");
+    var xGetterSetter = Idea.Util.getterSetter("x", Idea.Util.intValidator, null);
+    var yGetterSetter = Idea.Util.getterSetter("y", Idea.Util.intValidator, null);
+    var widthGetterSetter = Idea.Util.getterSetter("width", Idea.Util.intValidator, null);
+    var heightGetterSetter = Idea.Util.getterSetter("height", Idea.Util.intValidator, null);
+    var rxGetterSetter = Idea.Util.getterSetter("rx", Idea.Util.uintValidator, null);
+    var ryGetterSetter = Idea.Util.getterSetter("ry", Idea.Util.uintValidator, null);
+    var strokeGetterSetter = Idea.Util.getterSetter("stroke", Idea.Util.colorValidator, null);
+    var fillGetterSetter = Idea.Util.getterSetter("fill", Idea.Util.colorValidator, null);
 
     /*
      * Simple rectangle with content and/or with rounded corners.

@@ -76,6 +76,7 @@ Idea = function(){
         //document.body.appendChild(this._div);
 
         this.layers = [];
+        this._selection = [];
 
         this.slides = [new this.Slide()]; // slides in correct order
         this._slide = this.slides[0]; // currently active slide
@@ -104,13 +105,14 @@ Idea = function(){
         var scrollbarWindowSize = Idea.Conf.defaultViewboxHeight;
         var scrollbarScrollSize = Idea.Conf.defaultViewboxHeight / Idea.Conf.scrollbarScrollsPerPage;
         this._vScrollbar = new this.Scrollbar(this.canvasAndVScrollbar, this.canvas, Idea.Conf.canvasMinY, Idea.Conf.canvasMaxY, scrollbarWindowSize, 0, scrollbarScrollSize, undefined, undefined, 40, Idea.Conf.defaultViewportHeight, true);
+        //Idea.Util.observe(this.canvas, "viewBox", this._vScrollbar.positionSlider.bind(this._vScrollbar));
 
         scrollbarWindowSize = Idea.Conf.defaultViewboxWidth;
         scrollbarScrollSize = Idea.Conf.defaultViewboxWidth / Idea.Conf.scrollbarScrollsPerPage;
         this._hScrollbar = new this.Scrollbar(this.canvasAndScrollbars, this.canvas, Idea.Conf.canvasMinX, Idea.Conf.canvasMaxX, scrollbarWindowSize, 0, scrollbarScrollSize, undefined, undefined, Idea.Conf.defaultViewportWidth, 40, false);
+        //Idea.Util.observe(this.canvas, "viewBox", this._hScrollbar.positionSlider.bind(this._hScrollbar));
 
         this._div.appendChild(this.canvasAndScrollbars);
-
 
         this.gui.tools = new this.Toolbar();
         this._div.appendChild(this.gui.tools._div);
@@ -229,6 +231,18 @@ Idea.prototype = {
 
     appendSlide: function(slide){
         this.insertSlide(this.length, slide);
+    },
+
+    selection: function(widgets){
+        if (widgets === undefined) {
+            return this._selection;
+        }
+        else {
+            Idea.Util.callObservers(this, "selection", widgets);
+            // just in case: don't replace the old array object with a new one - modify it
+            this._selection.splice(0, this._selection.length);
+            this._selection.push.apply(this._selection, widgets);
+        }
     }
 
 };

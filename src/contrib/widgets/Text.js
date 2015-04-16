@@ -1,9 +1,9 @@
 (function(){
-    var xGetterSetter = Idea.Util.intGetterSetter("x");
-    var yGetterSetter = Idea.Util.intGetterSetter("y");
-    var contentGetterSetter = Idea.Util.stringGetterSetter("content");
-    var strokeGetterSetter = Idea.Util.colorGetterSetter("stroke");
-    var fillGetterSetter = Idea.Util.colorGetterSetter("fill");
+    var xGetterSetter = Idea.Util.getterSetter("x", Idea.Util.intValidator);
+    var yGetterSetter = Idea.Util.getterSetter("y", Idea.Util.intValidator);
+    var contentGetterSetter = Idea.Util.getterSetter("content", Idea.Util.stringValidator);
+    var strokeGetterSetter = Idea.Util.getterSetter("stroke", Idea.Util.colorValidator);
+    var fillGetterSetter = Idea.Util.getterSetter("fill", Idea.Util.colorValidator);
 
 	var Text = function(owner, father, x, y, content, stroke, fill, fontSize, fontWeight, fontStyle){
 		if (x === undefined) xGetterSetter.call(this, 0);

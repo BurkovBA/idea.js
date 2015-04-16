@@ -22,6 +22,12 @@
         destroy: function(){
             this.father.removeChild(this._group);
             delete this._drawing;
+        },
+        getterSetters: function(){
+            // TODO this.__proto__
+            for (var key in this.__proto__){
+                
+            }
         }
     };
 

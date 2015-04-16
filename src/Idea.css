@@ -1,8 +1,9 @@
-@import url(http://fonts.googleapis.com/css?family=Open+Sans);
+/* @import url(http://fonts.googleapis.com/css?family=Open+Sans); */
 
 .toolbar {
 	font-size: 20px;
-	font-family: 'Open Sans', sans-serif;
+	/*font-family: 'Open Sans', sans-serif;*/
+	font-family: Verdana, Tahoma, sans-serif;
 	display: inline-block;
 	vertical-align: top;
 	/*overflow: scrollbar;*/
@@ -56,4 +57,31 @@
 .icon.on {
 	border-style: none;
 	background-color: rgb(52, 64, 71);
+}
+
+input, textarea {
+	box-shadow: rgba(0,0,0, 0.1) 0px 0px 8px;
+    -moz-box-shadow: rgba(0,0,0, 0.1) 0px 0px 8px;
+    -webkit-box-shadow: rgba(0,0,0, 0.1) 0px 0px 8px;
+	padding: 9px;
+	border: solid 1px #e5e5e5;
+	outline: 0;
+	font: normal 13px/100% Verdana, Tahoma, sans-serif;
+	width: 200px;
+	bacground: #FFFFFF;
+}
+
+textarea {
+	height: 150px;
+	line-height: 150%;
+}
+
+input:hover, textarea:hover,
+input:focus, textarea:focus{
+	border-color: #c9c9c9;
+}
+
+.form label {
+	margin-left: 10px;
+	color: #999999;
 }

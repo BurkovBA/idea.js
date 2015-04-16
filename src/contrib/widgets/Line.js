@@ -1,13 +1,13 @@
 (function(){
-    var x1GetterSetter = Idea.Util.intGetterSetter("x1");
-    var y1GetterSetter = Idea.Util.intGetterSetter("y1");
-    var x2GetterSetter = Idea.Util.intGetterSetter("x2");
-    var y2GetterSetter = Idea.Util.intGetterSetter("y2");
-    var strokeGetterSetter = Idea.Util.colorGetterSetter("stroke");
-    var strokeWidthGetterSetter = Idea.Util.uintGetterSetter("strokeWidth");
+    var x1GetterSetter = Idea.Util.getterSetter("x1", Idea.Util.intValidator, null);
+    var y1GetterSetter = Idea.Util.getterSetter("y1", Idea.Util.intValidator, null);
+    var x2GetterSetter = Idea.Util.getterSetter("x2", Idea.Util.intValidator, null);
+    var y2GetterSetter = Idea.Util.getterSetter("y2", Idea.Util.intValidator, null);
+    var strokeGetterSetter = Idea.Util.getterSetter("stroke", Idea.Util.colorValidator, null);
+    var strokeWidthGetterSetter = Idea.Util.getterSetter("strokeWidth", Idea.Util.uintValidator, null);
 
-    var baseMarkerGetterSetter = Idea.Util.widgetGetterSetter("baseMarker");
-    var tipMarkerGetterSetter = Idea.Util.widgetGetterSetter("tipMarker");
+    var baseMarkerGetterSetter = Idea.Util.getterSetter("baseMarker", Idea.Util.widgetValidator, null);
+    var tipMarkerGetterSetter = Idea.Util.getterSetter("tipMarker", Idea.Util.widgetValidator, null);
 
     /*
      * Straight line

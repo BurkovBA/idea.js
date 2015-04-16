@@ -456,9 +456,10 @@
             Idea.Util.observers(subject, propertyName).pop(observer);
         },
 
+
         /*
-         * Factory function that returns getterSetter function, which,
-         * as getter, returns value of argName or, as setter, validates
+         * Factory function that returns another function, serving as getterSetter.
+         * As getter, it returns value of argName or, as setter, validates
          * input value (checks, if it's an unsigned integer), calls observers
          * and assigns input value to argName.
          * 
@@ -467,94 +468,37 @@
          * @param argName  name of argument to get/set with this method.
          */
 
-        uintGetterSetter: function(argName){
-            return function(arg){
+        getterSetter: function(argName, validator, widgets){
+            var output = function(arg){
                 if (arg === undefined) {return this["_"+argName];}
                 else {
-                    Idea.Util.uintValidator(arg, argName); // validate new value, throw exception if it's wrong
+                    validator(arg, argName); // validate new value, throw exception if it's wrong
                     Idea.Util.callObservers(this, argName, arg);
                     this["_"+argName] = arg; // assign new value
                 }
             };
+            output.widgets = widgets;
+            return output;
         },
 
         uintValidator: function(arg, argName){
             if (!Idea.Util.UINTREGEX.test(arg)) throw new Error(argName + " should be unsigned int, got: '" + arg + "'!");
         },
 
-        intGetterSetter: function(argName){
-            return function(arg){
-                if (arg === undefined) {return this["_"+argName];}
-                else {
-                    Idea.Util.intValidator(arg, argName);
-                    Idea.Util.callObservers(this, argName, arg);                    
-                    this["_"+argName] = arg;
-                }
-            };
-        },
-
         intValidator: function(arg, argName){
             if (!Idea.Util.INTREGEX.test(arg)) throw new Error(argName + " should be int, got: '" + arg + "'!");
         },
 
-        /*
-         * Factory function that returns getterSetter function, which,
-         * as getter, returns value of argName or, as setter, validates
-         * input value, checking, if it's a color literal.
-         * 
-         * @function
-         * @memberof Idea.Util
-         * @param argName  name of argument to get/set with this method.
-         */
-
-        colorGetterSetter: function(argName){
-            //TODO!!! COLOR literals, e.g. rgb, rgba or trivial color names
-            return function(arg){
-                if (arg === undefined) {return this["_"+argName];}
-                else {
-                    if (Idea.Util.isHexColor(arg)){
-                        Idea.Util.callObservers(this, argName, arg);                        
-                        this["_"+argName] = arg;
-                    }
-                    else {
-                        throw new Error(argName + " should be a valid color string, e.g #ACDC66, got: '" + arg + "'!");
-                    }
-                }
-            };
+        colorValidator: function(arg, argName){
+            if (!Idea.Util.isHexColor(arg)) throw new Error(argName + " should be a color, got: '" + arg + "'!");
         },
 
-        stringGetterSetter: function(argName){
-            return function(arg){
-                if (arg === undefined) {return this["_"+argName];}
-                else {
-                    Idea.Util.callObservers(this, argName, String(arg));
-                    this["_"+argName] = String(arg);
-                }
-            }
+        stringValidator: function(arg, argName){
+            if (!arg instanceof String) throw new Error(argName + " should be a String, got: '" + arg + "'!")
         },
 
-        /*
-         * Factory function that returns getterSetter function, which,
-         * as getter, returns value of argName or, as setter, validates
-         * input value, checking, if it's a Util.Widget subclass.
-         * 
-         * @function
-         * @memberof Idea.Util
-         * @param argName  name of argument to get/set with this method.
-         */
-
-        widgetGetterSetter: function(argName){
-            return function(arg){
-                if (arg === undefined) {return this["_"+argName];}
-                else {
-                    if (arg instanceof Idea.prototype.Widget) {
-                        Idea.Util.callObservers(this, argName, arg);                        
-                        this["_"+argName] = arg;
-                    }
-                    else {throw new Error(argName + "should be a Util.prototype.Widget subclass, got:'" + typeof arg + "'!");}
-                }
-            };
+        widgetValidator: function(arg, argName){
+            if (!arg instanceof Idea.prototype.Widget) throw new Error(argName + "should be a Util.prototype.Widget subclass, got:'" + typeof arg + "'!");
         }
-
     };
 })();

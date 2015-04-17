@@ -52,9 +52,9 @@
         if (tipMarker === undefined) this._tipMarker = null;
         else tipMarkerGetterSetter.call(this, tipMarker);
 
-        //draw primitives
         this.father = father;
 
+        //draw primitives
         this._group = Idea.Util.createSVGElement(this.father, 'g', {});
         this._drawing = Idea.Util.createSVGElement(this._group, 'line', {
             "x1": this.x1(),
@@ -64,15 +64,61 @@
             "stroke": this.stroke(),
             "stroke-width": this.strokeWidth()
         });
-        this._drawing.style.stroke = this._color;
-        this._drawing.style['stroke-width'] = this.width;
 
-        Idea.Util.observe(this, "x1", function(newValue, oldValue){this._drawing.setAttribute("x1", newValue);}.bind(this));
-        Idea.Util.observe(this, "y1", function(newValue, oldValue){this._drawing.setAttribute("y1", newValue);}.bind(this));
-        Idea.Util.observe(this, "x2", function(newValue, oldValue){this._drawing.setAttribute("x2", newValue);}.bind(this));
-        Idea.Util.observe(this, "y2", function(newValue, oldValue){this._drawing.setAttribute("y2", newValue);}.bind(this));
+        this._basePointer = Idea.Util.createSVGElement(this._group, 'circle', {
+            "cx": this.x1(),
+            "cy": this.y1(),
+            "r": 3,
+            "stroke": "#c9c9c9",
+            "fill": "#FFFFFF"
+        });
+
+        this._tipPointer = Idea.Util.createSVGElement(this._group, 'circle', {
+            "cx": this.x2(),
+            "cy": this.y2(),
+            "r": 3,
+            "stroke": "#c9c9c9",
+            "fill": "#FFFFFF"
+        });
+
+        this._vicinity = Idea.Util.createSVGElement(this._group, 'line', {
+            "x1": this.x1(),
+            "y1": this.y1(),
+            "x2": this.x2(),
+            "y2": this.y2(),
+            "stroke": this.stroke(),
+            "stroke-linecap": "square",
+            "stroke-width": this.strokeWidth() + 10,
+            "opacity": 0
+        });
+        // note there are bugs with groups of objects, see: https://code.google.com/p/chromium/issues/detail?id=424969
+        // http://jsfiddle.net/542afcfg/1/
+
+        Idea.Util.observe(this, "x1", function(newValue, oldValue){
+            this._drawing.setAttribute("x1", newValue);
+            this._vicinity.setAttribute("x1", newValue);
+            this._basePointer.setAttribute("cx", newValue);
+        }.bind(this));
+        Idea.Util.observe(this, "y1", function(newValue, oldValue){
+            this._drawing.setAttribute("y1", newValue);
+            this._vicinity.setAttribute("y1", newValue);
+            this._basePointer.setAttribute("cy", newValue);
+        }.bind(this));
+        Idea.Util.observe(this, "x2", function(newValue, oldValue){
+            this._drawing.setAttribute("x2", newValue);
+            this._vicinity.setAttribute("x2", newValue);
+            this._tipPointer.setAttribute("cx", newValue);
+        }.bind(this));
+        Idea.Util.observe(this, "y2", function(newValue, oldValue){
+            this._drawing.setAttribute("y2", newValue);
+            this._vicinity.setAttribute("y2", newValue);
+            this._tipPointer.setAttribute("cy", newValue);
+        }.bind(this));
         Idea.Util.observe(this, "stroke", function(newValue, oldValue){this._drawing.setAttribute("stroke", newValue);}.bind(this));
-        Idea.Util.observe(this, "strokeWidth", function(newValue, oldValue){this._drawing.setAttribute("stroke-width", newValue);}.bind(this));
+        Idea.Util.observe(this, "strokeWidth", function(newValue, oldValue){
+            this._drawing.setAttribute("stroke-width", newValue);
+            this.vicinity.setAttribute("stroke-width", newValue);
+        }.bind(this));
 
     };
 
@@ -143,8 +189,24 @@
 
     var tipMouseClick = function(e){
         this.layers.push(this._new);
+        this._new._vicinity.addEventListener("mouseover", editMouseOver.bind(this, this._new));
+        this._new._vicinity.addEventListener("mouseleave", editMouseLeave.bind(this, this._new));
         returnFromLineCreation.bind(this)();
     };
+
+    var editMouseOver = function(obj, e){
+        if (this.selection().indexOf(obj) === -1) {
+            obj._basePointer.setAttribute("opacity", 1);
+            obj._tipPointer.setAttribute("opacity", 1);
+        }
+    };
+
+    var editMouseLeave = function(obj, e){
+        if (this.selection().indexOf(obj) === -1) {
+            obj._basePointer.setAttribute("opacity", 0);
+            obj._tipPointer.setAttribute("opacity", 0);
+        }
+    }
 
     /*
      * END OF EVENT HANDLERS

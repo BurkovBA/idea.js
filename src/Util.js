@@ -481,6 +481,22 @@
             return output;
         },
 
+        /*
+         * Checks, if arg is a getterSetter. This function is used to select getterSetter properties from
+         * a prototype of an object, e.g.
+         *
+         *   var output = [];
+         *   for (var key in Object.getPrototypeOf(this)){ // !!! Object.getPrototypeOf() requires IE9+
+         *       if (Idea.Util.isGetterSetter(this.key)) output.push(this.key);
+         *   }
+         */
+
+        isGetterSetter: function(arg){
+            // note that null is an object too: http://stackoverflow.com/questions/8511281/check-if-a-variable-is-an-object-in-javascript
+            if (typeof arg === 'object' && arg.hasOwnProperty("widgets")) { return true;}
+            else { return false;}
+        },
+
         uintValidator: function(arg, argName){
             if (!Idea.Util.UINTREGEX.test(arg)) throw new Error(argName + " should be unsigned int, got: '" + arg + "'!");
         },

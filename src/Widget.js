@@ -24,9 +24,9 @@
             delete this._drawing;
         },
         getterSetters: function(){
-            // TODO this.__proto__
-            for (var key in this.__proto__){
-                
+            var output = [];
+            for (var key in Object.getPrototypeOf(this)){ // !!! Object.getPrototypeOf() requires IE9+
+                if (Idea.Util.isGetterSetter(this.key)) output.push(this.key);
             }
         }
     };

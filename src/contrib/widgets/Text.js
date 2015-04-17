@@ -21,9 +21,9 @@
 		if (fill === undefined) fillGetterSetter.call(this, "#000000");
 		else fillGetterSetter.call(this, fill);
 
-        //draw primitives
         this.father = father;
 
+        //draw primitives
         this._group = Idea.Util.createSVGElement(this.father, 'g', {});
         this._drawing = Idea.Util.createSVGElement(this._group, 'text', {
             "x": this.x(), 

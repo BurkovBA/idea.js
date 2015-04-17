@@ -52,9 +52,9 @@
         if (fill !== undefined) fillGetterSetter.call(this, fill);
         else strokeGetterSetter.call(this, "#000000");
 
-        //draw primitives
         this.father = father;
 
+        //draw primitives
         this._group = Idea.Util.createSVGElement(this.father, 'g', {});
         this._drawing = Idea.Util.createSVGElement(this._group, 'rect', {
             "x": this.x(),

@@ -377,6 +377,29 @@
             var canvasCoords = {x: canvasX, y: canvasY};
             return canvasCoords;
         },
+
+        /*
+         * Each widget in SVG may have its own coordinate system, which might be rotated/shifted/scewed relatively
+         * to the canvasCoordsinate system
+         * TODO: picture here!!!
+         */
+
+        widgetCoordsToCanvasCoords: function(x, y, widget){
+            var canvasCoords = {};
+            canvasCoords.x = widget.matrix.a * x + widget.matrix.c * y + widget.matrix.e;
+            canvasCoords.y = widget.matrix.b * x + widget.matrix.d * y + widget.matrix.f;
+            return canvasCoords;
+        },
+
+        canvasCoordsToWidgetCoords: function(x, y, widget){
+            var getInverseMatrix = function(matrix){}; //TODO WRITE THIS FUNCTION!
+            var inverse = getInverseMatrix(widget.matrix);
+
+            var widgetCoords = {};
+            widgetCoords.x = widget.inverse.a * x + widget.inverse.c * y + widget.matrix.e;
+            widgetCoords.y = widget.inverse.b * x + widget.inverse.d * y + widget.matrix.f;
+            return widgetCoords;
+        },
         
         /*
          * Idea.js makes use of getterSetters (possibly overloaded) to
@@ -435,7 +458,7 @@
 
         /*
          * Connects observer callback to subject's property, defined by a getterSetter.
-         * E.g.:
+         * Example:
          *
          * Idea.Util.observe(subject, 'color', function(newValue, oldValue){
          *    console.log("subject's color changed from " + oldValue + "to " + newValue);
@@ -456,6 +479,30 @@
             Idea.Util.observers(subject, propertyName).pop(observer);
         },
 
+
+        /*
+         * This function is a shortcut that is required in the following scenario:
+         * often you need to bind an eventListener to a certain thisArg and other arguments
+         * before adding it to the obj and have to cache somewhere this binded version
+         * of listener to remove it later. These two functions do the caching/removing for you.
+         *
+         */
+
+        addEventListener: function(obj, eventType, listener, useCapture, thisArg, argumentsList){
+            debugger;
+            var bindArguments = [thisArg].concat(argumentsList);
+            var bindedListener = listener.bind.apply(listener.bind, bindArguments);
+            obj.addEventListener(eventType, bindedListener, useCapture);
+            // TODO PROPER HASHING FUNCTION
+            var hash = "_" + String(listener) + String(thisArg) + String(argumentsList);
+            obj[hash] = bindedListener;
+        },
+
+        removeEventListener: function(obj, eventType, listener, useCapture, thisArg, argumentsList){
+            var hash = "_" + String(listener) + String(thisArg) + String(argumentsList);            
+            obj.removeEventListener(eventType, obj[hash], useCapture);
+            delete obj[hash];
+        },
 
         /*
          * Factory function that returns another function, serving as getterSetter.

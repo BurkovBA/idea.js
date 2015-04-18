@@ -43,6 +43,9 @@ module.exports = function(grunt) {
                 }
             }
         },
+        qunit:{
+            files: ['test/qunit.html']
+        },
         watch: {
             files: ['<%= concat.dist.src %>'],
             tasks: ['concat', 'jshint'],
@@ -52,7 +55,9 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-concat');
     grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-contrib-watch');
+    grunt.loadNpmTasks('grunt-contrib-qunit');
 
     grunt.registerTask('default', ['concat', 'jshint']);
+    grunt.registerTask('test', 'qunit');
 
 };

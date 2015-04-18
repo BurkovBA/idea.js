@@ -191,6 +191,7 @@
         this.layers.push(this._new);
         this._new._vicinity.addEventListener("mouseover", editMouseOver.bind(this, this._new));
         this._new._vicinity.addEventListener("mouseleave", editMouseLeave.bind(this, this._new));
+        this._new._drawing.addEventListener("mousedown", editMouseDown.bind(this, this._new));
         returnFromLineCreation.bind(this)();
     };
 
@@ -206,7 +207,37 @@
             obj._basePointer.setAttribute("opacity", 0);
             obj._tipPointer.setAttribute("opacity", 0);
         }
-    }
+    };
+
+    var editMouseDown = function(obj, e){
+        var event = Idea.Util.normalizeMouseEvent(e);
+        this._mouseDownCoords = Idea.Util.windowCoordsToCanvasCoords(event.clientX, event.clientY, this.canvas._canvas);
+
+        this.selection([obj]);
+
+        this.canvas.addEventListener("mousemove", editMouseMove, false, true);
+
+        this._bindedEditMouseUp = editMouseMove.bind(this, obj);        
+        window.addEventListener("mouseup", editMouseUp, false);
+    };
+
+    var editMouseMove = function(obj, e){
+        var event = Idea.Util.normalizeMouseEvent(e);
+        var canvasCoords = Idea.Util.windowCoordsToCanvasCoords(event.clientX, event.clientY, this.canvas._canvas);
+
+        obj.x1(obj.x1 + canvasCoords.x - this._mouseDownCoords.x);
+        obj.y1(obj.y1 + canvasCoords.y - this._mouseDownCoords.y);
+        obj.x2(obj.x2 + canvasCoords.x - this._mouseDownCoords.x);
+        obj.y2(obj.y2 + canvasCoords.y - this._mouseDownCoords.y);
+    };
+
+    var editMouseUp = function(obj, e){
+        this.canvas.removeEventListener("mousemove", editMouseMove, false, true);
+        window.canvas.removeEventListener("mouseup", this._bindedEditMouseUp, false);
+        delete this._bindedEditMouseUp;
+
+        delete this._mouseDownCoords;
+    };
 
     /*
      * END OF EVENT HANDLERS

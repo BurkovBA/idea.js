@@ -489,7 +489,6 @@
          */
 
         addEventListener: function(obj, eventType, listener, useCapture, thisArg, argumentsList){
-            debugger;
             var bindArguments = [thisArg].concat(argumentsList);
             var bindedListener = listener.bind.apply(listener.bind, bindArguments);
             obj.addEventListener(eventType, bindedListener, useCapture);

@@ -32,6 +32,8 @@
      */
 
     var Line = function(owner, father, x1, y1, x2, y2, stroke, strokeWidth, baseMarker, tipMarker){
+        Idea.Widget.call(this);
+
         // TODO allow to use other widgets dock points to be used 
         // as base and tip instead of just coordinates. Then line will
         // stick to widgets.
@@ -65,21 +67,23 @@
             "stroke-width": this.strokeWidth()
         });
 
-        this._basePointer = Idea.Util.createSVGElement(this._group, 'circle', {
+        this._baseHandle = Idea.Util.createSVGElement(this._group, 'circle', {
             "cx": this.x1(),
             "cy": this.y1(),
             "r": 3,
             "stroke": "#c9c9c9",
             "fill": "#FFFFFF"
         });
+        this.handles.push(this._baseHandle);
 
-        this._tipPointer = Idea.Util.createSVGElement(this._group, 'circle', {
+        this._tipHandle = Idea.Util.createSVGElement(this._group, 'circle', {
             "cx": this.x2(),
             "cy": this.y2(),
             "r": 3,
             "stroke": "#c9c9c9",
             "fill": "#FFFFFF"
         });
+        this.handles.push(this._tipHandle);
 
         this._vicinity = Idea.Util.createSVGElement(this._group, 'line', {
             "x1": this.x1(),
@@ -97,22 +101,22 @@
         Idea.Util.observe(this, "x1", function(newValue, oldValue){
             this._drawing.setAttribute("x1", newValue);
             this._vicinity.setAttribute("x1", newValue);
-            this._basePointer.setAttribute("cx", newValue);
+            this._baseHandle.setAttribute("cx", newValue);
         }.bind(this));
         Idea.Util.observe(this, "y1", function(newValue, oldValue){
             this._drawing.setAttribute("y1", newValue);
             this._vicinity.setAttribute("y1", newValue);
-            this._basePointer.setAttribute("cy", newValue);
+            this._baseHandle.setAttribute("cy", newValue);
         }.bind(this));
         Idea.Util.observe(this, "x2", function(newValue, oldValue){
             this._drawing.setAttribute("x2", newValue);
             this._vicinity.setAttribute("x2", newValue);
-            this._tipPointer.setAttribute("cx", newValue);
+            this._tipHandle.setAttribute("cx", newValue);
         }.bind(this));
         Idea.Util.observe(this, "y2", function(newValue, oldValue){
             this._drawing.setAttribute("y2", newValue);
             this._vicinity.setAttribute("y2", newValue);
-            this._tipPointer.setAttribute("cy", newValue);
+            this._tipHandle.setAttribute("cy", newValue);
         }.bind(this));
         Idea.Util.observe(this, "stroke", function(newValue, oldValue){this._drawing.setAttribute("stroke", newValue);}.bind(this));
         Idea.Util.observe(this, "strokeWidth", function(newValue, oldValue){
@@ -130,8 +134,6 @@
      */
 
     var baseMouseClick = function(e){
-        console.log("baseMouseClick called");
-
         // create a point and mousemove listener
         var event = Idea.Util.normalizeMouseEvent(e);
         var canvasCoords = Idea.Util.windowCoordsToCanvasCoords(event.clientX, event.clientY, this.canvas._canvas);
@@ -188,55 +190,16 @@
     };
 
     var tipMouseClick = function(e){
-        this.layers.push(this._new);
-        this._new._vicinity.addEventListener("mouseover", editMouseOver.bind(this, this._new));
-        this._new._vicinity.addEventListener("mouseleave", editMouseLeave.bind(this, this._new));
-        this._new._drawing.addEventListener("mousedown", editMouseDown.bind(this, this._new));
+        var obj = this._new;
+        this.layers.push(obj);
+
         returnFromLineCreation.bind(this)();
-    };
 
-    var editMouseOver = function(obj, e){
-        if (this.selection().indexOf(obj) === -1) {
-            obj._basePointer.setAttribute("opacity", 1);
-            obj._tipPointer.setAttribute("opacity", 1);
-        }
-    };
+        Idea.Util.addEventListener(obj._vicinity, "mouseover", obj.vicinityMouseOver, false, this, [obj]);
+        Idea.Util.addEventListener(obj._vicinity, "mouseleave", obj.vicinityMouseLeave, false, this, [obj]);
+        Idea.Util.addEventListener(obj._vicinity, "mousedown", obj.vicinityMouseDown, false, this, [obj]);
 
-    var editMouseLeave = function(obj, e){
-        if (this.selection().indexOf(obj) === -1) {
-            obj._basePointer.setAttribute("opacity", 0);
-            obj._tipPointer.setAttribute("opacity", 0);
-        }
-    };
-
-    var editMouseDown = function(obj, e){
-        var event = Idea.Util.normalizeMouseEvent(e);
-        this._mouseDownCoords = Idea.Util.windowCoordsToCanvasCoords(event.clientX, event.clientY, this.canvas._canvas);
-
-        this.selection([obj]);
-
-        this.canvas.addEventListener("mousemove", editMouseMove, false, true);
-
-        this._bindedEditMouseUp = editMouseMove.bind(this, obj);        
-        window.addEventListener("mouseup", editMouseUp, false);
-    };
-
-    var editMouseMove = function(obj, e){
-        var event = Idea.Util.normalizeMouseEvent(e);
-        var canvasCoords = Idea.Util.windowCoordsToCanvasCoords(event.clientX, event.clientY, this.canvas._canvas);
-
-        obj.x1(obj.x1 + canvasCoords.x - this._mouseDownCoords.x);
-        obj.y1(obj.y1 + canvasCoords.y - this._mouseDownCoords.y);
-        obj.x2(obj.x2 + canvasCoords.x - this._mouseDownCoords.x);
-        obj.y2(obj.y2 + canvasCoords.y - this._mouseDownCoords.y);
-    };
-
-    var editMouseUp = function(obj, e){
-        this.canvas.removeEventListener("mousemove", editMouseMove, false, true);
-        window.canvas.removeEventListener("mouseup", this._bindedEditMouseUp, false);
-        delete this._bindedEditMouseUp;
-
-        delete this._mouseDownCoords;
+        Idea.Util.addEventListener(obj._vicinity, "mousedown", obj.translateMouseDown, false, this, [obj]);
     };
 
     /*

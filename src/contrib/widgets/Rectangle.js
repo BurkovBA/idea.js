@@ -26,8 +26,8 @@
      * @param content
      */
     var Rectangle = function(owner, father, x, y, width, height, rx, ry, stroke, fill) {
-        //if (x === undefined) {throw new Error("x not specified!");}
-        //if (y === undefined) {throw new Error("y not specified!");}
+        Idea.Widget.call(this);
+
         if (x === undefined) xGetterSetter.call(this, 1);
         else xGetterSetter.call(this, x);
 

@@ -8,10 +8,10 @@ QUnit.test( "Idea.Util.addEventListener/removeEventListener", function( assert )
 
     var evt = new Event('build');
 
-    var eventListener = function (e, arg1, arg2) {
+    var eventListener = function (arg1, arg2, e) {
         console.log("eventListener called");
-		this.arg1.push(arg2);
-		return this.arg1;
+        this[arg1].push(arg2);
+        return this.arg1;
 	};
 
                              //obj, eventType, listener, useCapture, thisArg, argumentsList

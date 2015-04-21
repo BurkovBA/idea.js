@@ -141,6 +141,8 @@
     });
 
     var Toolbar = function(idea){
+        //TODO: de-duplicate this code
+
     	this.idea = idea;
         this._div = document.createElement('div');
         this._div.className = 'toolbar';
@@ -162,6 +164,11 @@
         this.tabBar.appendChild(this.objectsTab);
         Idea.Util.addClass(this.objectsTab, 'toolbar-tab');
 
+        this.definitionsTab = document.createElement('div');
+        this.definitionsTab.innerHTML = "Definitions"; //ie8+/9+
+        this.tabBar.appendChild(this.definitionsTab);
+        Idea.Util.addClass(this.definitionsTab, 'toolbar-tab');
+
         this.animationsTab = document.createElement('div');
         this.animationsTab.innerHTML = "Animations"; //ie8+/9+
         this.tabBar.appendChild(this.animationsTab);
@@ -176,12 +183,16 @@
         this._div.appendChild(this.objectsPage);
         Idea.Util.addClass(this.objectsPage, 'toolbar-page');
 
+        this.definitionsPage = document.createElement('div');
+        this._div.appendChild(this.definitionsPage);
+        Idea.Util.addClass(this.definitionsPage, 'toolbar-page');
+
         this.animationsPage = document.createElement('div');
         this._div.appendChild(this.animationsPage);
         Idea.Util.addClass(this.animationsPage, 'toolbar-page');
 
-        var toolbarTabs = [this.fileTab, this.objectsTab, this.animationsTab];
-        var toolbarPages = [this.filePage, this.objectsPage, this.animationsPage];
+        var toolbarTabs = [this.fileTab, this.objectsTab, this.definitionsTab, this.animationsTab];
+        var toolbarPages = [this.filePage, this.objectsPage, this.definitionsPage, this.animationsPage];
 
         this.fileTab.addEventListener('click', function(){
             toolbarPages.forEach(function(el, index, array){if (Idea.Util.hasClass(el, 'active')) Idea.Util.removeClass(el, 'active')});
@@ -195,6 +206,14 @@
             toolbarTabs.forEach(function(el, index, array){if (Idea.Util.hasClass(el, 'active')) Idea.Util.removeClass(el, 'active')});
             if (!Idea.Util.hasClass(this.objectsTab, 'active')) Idea.Util.addClass(this.objectsTab, 'active');
             if (!Idea.Util.hasClass(this.objectsPage, 'active')) Idea.Util.addClass(this.objectsPage, 'active');
+        }.bind(this));
+
+        this.definitionsTab.addEventListener('click', function(){
+            // TODO WRITE THIS!!!
+            toolbarPages.forEach(function(el, index, array){if (Idea.Util.hasClass(el, 'active')) Idea.Util.removeClass(el, 'active')});
+            toolbarTabs.forEach(function(el, index, array){if (Idea.Util.hasClass(el, 'active')) Idea.Util.removeClass(el, 'active')});
+            if (!Idea.Util.hasClass(this.definitionsTab, 'active')) Idea.Util.addClass(this.definitionsTab, 'active');
+            if (!Idea.Util.hasClass(this.definitionsPage, 'active')) Idea.Util.addClass(this.definitionsPage, 'active');
         }.bind(this));
 
         this.animationsTab.addEventListener('click', function(){

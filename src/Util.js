@@ -113,7 +113,8 @@
         },
 
         /*
-         * This function normalizes messy keyboard events. 
+         * This function normalizes messy keyboard events. It takes native browser event object on
+         * input and returns normalized event object, which provides consistent behavior across browsers.
          *
          * First, I'll tell about the keyboard events mess, then I'll tell, what this function does.
          *
@@ -489,12 +490,21 @@
          */
 
         addEventListener: function(obj, eventType, listener, useCapture, thisArg, argumentsList){
-            var bindArguments = [thisArg].concat(argumentsList);
-            var bindedListener = listener.bind.apply(listener.bind, bindArguments);
+            // brace yourself, funcitonal javascript brainfuck coming, see:
+            // http://stackoverflow.com/questions/29736487/function-prototype-bind-apply-doesnt-work-as-expected
+            try{
+
+            var thisAndArguments = [thisArg].concat(argumentsList);
+            var bindedListener = listener.bind.apply(listener, thisAndArguments);
             obj.addEventListener(eventType, bindedListener, useCapture);
             // TODO PROPER HASHING FUNCTION
             var hash = "_" + String(listener) + String(thisArg) + String(argumentsList);
             obj[hash] = bindedListener;
+
+            }
+            catch (e) {
+                debugger;
+            }
         },
 
         removeEventListener: function(obj, eventType, listener, useCapture, thisArg, argumentsList){
@@ -561,6 +571,8 @@
 
         widgetValidator: function(arg, argName){
             if (!arg instanceof Idea.prototype.Widget) throw new Error(argName + "should be a Util.prototype.Widget subclass, got:'" + typeof arg + "'!");
-        }
+        },
+
+        transformValidator: function(arg, argName){}
     };
 })();

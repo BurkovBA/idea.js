@@ -6,6 +6,8 @@
     var fillGetterSetter = Idea.Util.getterSetter("fill", Idea.Util.colorValidator);
 
 	var Text = function(owner, father, x, y, content, stroke, fill, fontSize, fontWeight, fontStyle){
+        Idea.Widget.call(this);
+
 		if (x === undefined) xGetterSetter.call(this, 0);
 		else xGetterSetter.call(this, 0);
 
@@ -42,9 +44,12 @@
 	};
 
 	var mouseClick = function(e){
+        console.log("mouseClick");
         // create text and mousemove listener
         var event = Idea.Util.normalizeMouseEvent(e);
         var canvasCoords = Idea.Util.windowCoordsToCanvasCoords(event.clientX, event.clientY, this.canvas._canvas);
+        console.log("canvasCoords = " + canvasCoords);
+
 
         // draw the base on canvas
         this._new = new Text(this, this.canvas._canvas, canvasCoords.x, canvasCoords.y, "", '#000000', '#000000');

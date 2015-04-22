@@ -695,9 +695,9 @@
                             };                            
                         }
                         else{
-                            var result = matrixMulitplication({a:1, b:0, c:0, d:1, e:parseFloat(match[3]), f:parseFloat(match[4])}, 
+                            var result = Idea.Util.matrixMultiplication({a:1, b:0, c:0, d:1, e:parseFloat(match[3]), f:parseFloat(match[4])}, 
                                 {a:Math.cos(parseFloat(match[1])), b:Math.sin(parseFloat(match[1])), c:-Math.sin(parseFloat(match[1])), d:Math.cos(parseFloat(match[1])), e:0, f:0});
-                            result = matrixMulitplication(result, {a:1, b:0, c:0, d:1, e:-parseFloat(match[3]), f:-parseFloat(match[4])});
+                            result = Idea.Util.matrixMultiplication(result, {a:1, b:0, c:0, d:1, e:-parseFloat(match[3]), f:-parseFloat(match[4])});
                             transform = {
                                 type: 'rotate',
                                 angle: parseFloat(match[1]),
@@ -746,13 +746,13 @@
             });
             // note that initial matrix should be reversed!
             transforms.reverse();
-            transforms.forEach(function(el){ matrix = Idea.Util.matrixMulitplication(matrix, el); });
+            transforms.forEach(function(el){ matrix = Idea.Util.matrixMultiplication(matrix, el); });
             transforms.reverse();
             return [matrix, transforms];
         },
 
-        matrixMulitplication: function(matrix1, matrix2){
-            result = {};
+        matrixMultiplication: function(matrix1, matrix2){
+            var result = {};
             result.a = matrix1.a*matrix2.a + matrix1.c*matrix2.b;
             result.b = matrix1.b*matrix2.a + matrix1.d*matrix2.b;
             result.c = matrix1.a*matrix2.c + matrix1.c*matrix2.d;

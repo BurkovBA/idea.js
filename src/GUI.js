@@ -95,7 +95,7 @@
     /**
     *
     * Context represents the state of edited or created widget. E.g. for a Line it contains
-    * its x1, y1, x2, y2 coordinates, stroke, strokeWidth etc.
+    * its x1, y1, x2, y2 coordinates, stroke, strokeWidth etc., i.e. properties set by getterSetters.
     *
     */
 
@@ -108,19 +108,23 @@
         constructor: Context,
 
         /*
-         * Change is meant to be listening to idea.selection() for possible changes.
+         * Context switch happens when a new set of widgets is selected via idea.selection(newSetOfWidgets).
+         * This function observes those changes and re-draws context to reflect the new selection's properties.
          */
 
-        change: function(newValue, oldValue){
+        switch: function(newValue, oldValue){
             if (newValue.length === 1) {
-                for (var element in this.newValue.getterSetters()){
-                    var contextWidgetConstructors = Idea.Util.contextWidgets(element.getterType);
-                    var contextWidgets = [];
-                    contextWidgetConstructors.forEach(function(el, index, array){
-                        
-                    }.bind(this));
+                var getterSetters = this.newValue[0].getterSetters();
+                var contextWidgetSetConstructors = {};
+                var contextWidgetSets = {};
+                getterSetters.forEach(function(el){contextWidgetSetConstructors[el] = el.widgets});
+                
+                for (var key in contextWidgetSetConstructors){
+                    contextWidgetSetConstructors[key] = [];
+                    contextWidgetSetConstructors[key].forEach(function(constructor){
+                        contextWidgetSets[key].push(constructor());
+                    });
                 }
-                    
             }
             else {
                 this.destroy(oldValue);
@@ -129,7 +133,7 @@
 
         destroy: function(selection){
             selection.forEach(function(obj, index, array){
-                this.contextWidgets[obj]
+
             });
         }
     };

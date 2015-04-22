@@ -97,9 +97,6 @@
         another_rect.style.fill = "none";
         // TODO REMOVE THIS IT'S A TEST
 
-        // this stores methods that are bound to canvas, but whose "this" is bound to this.idea
-        this.bindedListenersCache = {};
-
         // http://en.wikipedia.org/wiki/HTML_attribute - list of events
     };
 
@@ -128,6 +125,22 @@
                 viewBoxAttribute = viewBox.x + " " + viewBox.y + " " + viewBox.width + " " + viewBox.height;
                 this._canvas.setAttribute("viewBox", viewBoxAttribute);  //this._canvas.setAttributeNS(Idea.Util.SVGNS, "viewBox", viewBoxAttribute);
             }
+        },
+
+        vScrollbarSliderMin: function(){
+            
+        },
+
+        vScrollbarSliderMax: function(){
+
+        },
+
+        hScrollbarSliderMin: function(){
+
+        },
+        
+        hScrollbarSliderMax: function(){
+
         },
 
         /**

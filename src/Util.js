@@ -497,6 +497,9 @@
          * before adding it to the obj and have to cache somewhere this binded version
          * of listener to remove it later. These two functions do the caching/removing for you.
          *
+         * NOTE: IE8- don't support add/removeEventListener, they have detach event. 
+         * We don't support them.
+         *
          */
 
         addEventListener: function(obj, eventType, listener, useCapture, thisArg, argumentsList){
@@ -578,6 +581,11 @@
 
         uintValidator: function(arg, argName){
             if (!Idea.Util.UINTREGEX.test(arg)) throw new Error(argName + " should be unsigned int, got: '" + arg + "'!");
+        },
+
+        uintWidget: {
+            el: 'input',
+            attributes: {type: 'text'}
         },
 
         intValidator: function(arg, argName){

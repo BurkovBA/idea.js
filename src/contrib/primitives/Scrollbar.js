@@ -277,24 +277,19 @@ Scrollbar.prototype = {
 
 		// check if it is on slider middle or edge - whether we move slider or resize it
 		if ( Math.abs(coord - this.sliderMin()) / (this.sliderMax() - this.sliderMin()) <= 0.2){ // this is near minimum edge - resize slider
-			this._bindedSliderMinResizeMouseUpHandler = this.sliderMinResizeMouseUpHandler.bind(this);
-			this._bindedSliderMinResizeMouseMoveHandler = this.sliderMinResizeMouseMoveHandler.bind(this);
-			window.addEventListener('mouseup', this._bindedSliderMinResizeMouseUpHandler, false);
-			window.addEventListener('mousemove', this._bindedSliderMinResizeMouseMoveHandler, false);
+			// obj, eventType, listener, useCapture, thisArg, argumentsList
+			Idea.Util.addEventListener(window, 'mouseup', this.sliderMinResizeMouseUpHandler, false, this, []);
+			Idea.Util.addEventListener(window, 'mousemove', this.sliderMinResizeMouseMoveHandler, false, this, [])
 		}
 		else if ( Math.abs(coord - this.sliderMax()) / (this.sliderMax() - this.sliderMin()) <= 0.2 ) { // this is near maximum edge - resize slider
-			this._bindedSliderMaxResizeMouseUpHandler = this.sliderMaxResizeMouseUpHandler.bind(this);
-			this._bindedSliderMaxResizeMouseMoveHandler = this.sliderMaxResizeMouseMoveHandler.bind(this);
-			window.addEventListener('mouseup', this._bindedSliderMaxResizeMouseUpHandler, false);
-			window.addEventListener('mousemove', this._bindedSliderMaxResizeMouseMoveHandler, false);
+			Idea.Util.addEventListener(window, 'mouseup', this.sliderMaxResizeMouseUpHandler, false, this, []);
+			Idea.Util.addEventListener(window, 'mousemove', this.sliderMaxResizeMouseMoveHandler, false, this, []);
 		}
 		else { // if middle
 			// attach mouse handlers to window, not document.documentElement (representing <html>)
 			// or mouse events beyond the browser window will be lost
-			this._bindedMouseUpHandler = this.sliderDragMouseUpHandler.bind(this);
-			this._bindedMouseMoveHandler = this.sliderDragMouseMoveHandler.bind(this);
-			window.addEventListener('mouseup', this._bindedMouseUpHandler, false);
-			window.addEventListener('mousemove', this._bindedMouseMoveHandler, false);
+			Idea.Util.addEventListener(window, 'mouseup', this.sliderDragMouseUpHandler, false, this, []);
+			Idea.Util.addEventListener(window, 'mousemove', this.sliderDragMouseMoveHandler, false, this, []);
 
 			// remember the offset of click on the slider so that we know, where the click occurred
 			this.sliderClickOffset = coord - this.sliderMin(); // WARNING: we assume here that scrollbar wasn't transformed (rotated/shifted etc.)						
@@ -339,17 +334,9 @@ Scrollbar.prototype = {
 
 		e.preventDefault();
 
-		if (window.removeEventListener){ // modern browsers use removeEventListener
-			window.removeEventListener('mouseup', this._bindedMouseUpHandler);
-			window.removeEventListener('mousemove', this._bindedMouseMoveHandler);
-		}
-		else if (window.detachEvent){ // ie8- use detachEvent
-			window.detachEvent('mouseup', this._bindedMouseUpHandler);
-			window.detachEvent('mousemove', this._bindedMouseMoveHandler);
-		}
+		Idea.Util.removeEventListener(window, 'mouseup', this.sliderDragMouseUpHandler, false, this, []);
+		Idea.Util.removeEventListener(window, 'mousemove', this.sliderDragMouseMoveHandler, false, this, []);
 
-		delete this._bindedMouseUpHandler;
-		delete this._bindedMouseMoveHandler;
 		delete this.sliderClickOffset;
 
 		// TODO unblock scaling
@@ -359,17 +346,8 @@ Scrollbar.prototype = {
 	sliderMinResizeMouseUpHandler: function(e){
 		e.preventDefault();
 
-		if (window.removeEventListener){
-			window.removeEventListener('mouseup', this._bindedSliderMinResizeMouseUpHandler);
-			window.removeEventListener('mousemove', this._bindedSliderMinResizeMouseMoveHandler);
-		}
-		else if (window.detachEvent){
-			window.detachEvent('mouseup', this._bindedSliderMinResizeMouseUpHandler);
-			window.detachEvent('mousemove', this._bindedSliderMinResizeMouseMoveHandler);
-		} //ie8-
-
-		delete this._bindedSliderMinResizeMouseUpHandler;
-		delete this._bindedSliderMinResizeMouseMoveHandler;
+		Idea.Util.removeEventListener(window, 'mouseup', this.sliderMinResizeMouseUpHandler, false, this, []);
+		Idea.Util.removeEventListener(window, 'mousemove', this.sliderMinResizeMouseMoveHandler, false, this, []);
 
 		// TODO unblock scaling, mousewheel
 	},
@@ -410,17 +388,8 @@ Scrollbar.prototype = {
 	sliderMaxResizeMouseUpHandler: function(e){
 		e.preventDefault();
 
-		if (window.removeEventListener){
-			window.removeEventListener('mouseup', this._bindedSliderMaxResizeMouseUpHandler);
-			window.removeEventListener('mousemove', this._bindedSliderMaxResizeMouseMoveHandler);
-		}
-		else if (window.detachEvent){
-			window.detachEvent('mouseup', this._bindedSliderMaxResizeMouseUpHandler);
-			window.detachEvent('mousemove', this._bindedSliderMaxResizeMouseMoveHandler);
-		} //ie8-
-
-		delete this._bindedSliderMaxResizeMouseUpHandler;
-		delete this._bindedSliderMaxResizeMouseMoveHandler;
+		Idea.Util.removeEventListener(window, 'mouseup', this.sliderMaxResizeMouseUpHandler, false, this, []);
+		Idea.Util.removeEventListener(window, 'mousemove', this.sliderMaxResizeMouseMoveHandler, false, this, []);
 
 		// TODO unblock scaling, mousewheel
 	},
@@ -468,13 +437,9 @@ Scrollbar.prototype = {
 		// block mousewheel
 
 		// button should continue scrolling, while you press the mouse button and keep pointer over it
-		this._bindedForwardButtonMouseUpHandler = this.forwardButtonMouseUpHandler.bind(this);
-		this._bindedForwardButtonMouseEnterHandler = this.forwardButtonMouseEnterHandler.bind(this);
-		this._bindedForwardButtonMouseOutHandler = this.forwardButtonMouseOutHandler.bind(this);
-
-		window.addEventListener('mouseup', this._bindedForwardButtonMouseUpHandler, false);
-		this.forwardButton.addEventListener('mouseenter', this._bindedForwardButtonMouseEnterHandler, false);
-		this.forwardButton.addEventListener('mouseout', this._bindedForwardButtonMouseOutHandler, false);
+		Idea.Util.addEventListener(window, 'mouseup', this.forwardButtonMouseUpHandler, false, this, []);
+		Idea.Util.addEventListener(this.forwardButton, 'mouseup', this.forwardButtonMouseEnterHandler, false, this, []);
+		Idea.Util.addEventListener(this.forwardButton, 'mouseup', this.forwardButtonMouseOutHandler, false, this, []);
 
 		this.scrollForward();
 		this.scrollForwardInterval = setInterval(this.scrollForward.bind(this), 50);
@@ -492,40 +457,27 @@ Scrollbar.prototype = {
 	forwardButtonMouseUpHandler: function(e){
 		clearInterval(this.scrollForwardInterval);
 		delete this.scrollForwardInterval;
-		// unblock mousewheel
-		// change appearance
 
-		if (window.removeEventListener){ // modern browsers use removeEventListener
-			window.removeEventListener('mouseup', this._bindedForwardButtonMouseUpHandler);
-			this.forwardButton.removeEventListener('mouseenter', this._bindedForwardButtonMouseEnterHandler);
-			this.forwardButton.removeEventListener('mouseout', this._bindedForwardButtonMouseOutHandler);
-		}
-		else if (window.detachEvent){ // ie8- use detachEvent
-			window.detachEvent('mouseup', this._bindedForwardButtonMouseUpHandler);
-			this.forwardButton.detachEvent('mouseenter', this._bindedForwardButtonMouseEnterHandler);
-			this.forwardButton.detachEvent('mouseout', this._bindedForwardButtonMouseOutHandler);
-		}
+		// TODO unblock mousewheel
+		// TODO change appearance
 
-		delete this._bindedForwardButtonMouseUpHandler;
-		delete this._bindedForwardButtonMouseOutHandler;
-		delete this._bindedForwardButtonMouseEnterHandler;
+		Idea.Util.addRemoveListener(window, 'mouseup', this.forwardButtonMouseUpHandler, false, this, []);
+		Idea.Util.addRemoveListener(this.forwardButton, 'mouseup', this.forwardButtonMouseEnterHandler, false, this, []);
+		Idea.Util.addRemoveListener(this.forwardButton, 'mouseup', this.forwardButtonMouseOutHandler, false, this, []);
 	},
 
 	backwardButtonMouseDownHandler: function(e){
 		e.preventDefault();
 		var event = Idea.Util.normalizeMouseEvent(e);
 		if (event.which != 1) return; // check that it's left mouse button, else ignore event
-		// change appearance
-		// block mousewheel
+
+		// TODO change appearance
+		// TODO block mousewheel
 
 		// button should continue scrolling, while you press the mouse button and keep pointer over it
-		this._bindedBackwardButtonMouseUpHandler = this.backwardButtonMouseUpHandler.bind(this);
-		this._bindedBackwardButtonMouseEnterHandler = this.backwardButtonMouseEnterHandler.bind(this);
-		this._bindedBackwardButtonMouseOutHandler = this.backwardButtonMouseOutHandler.bind(this);
-
-		window.addEventListener('mouseup', this._bindedBackwardButtonMouseUpHandler, false);
-		this.backwardButton.addEventListener('mouseenter', this._bindedBackwardButtonMouseEnterHandler, false);
-		this.backwardButton.addEventListener('mouseout', this._bindedBackwardButtonMouseOutHandler, false);
+		Idea.Util.addEventListener(window, 'mouseup', this.backwardButtonMouseUpHandler, false, this, []);
+		Idea.Util.addEventListener(this.backwardButton, 'mouseup', this.backwardButtonMouseEnterHandler, false, this, []);
+		Idea.Util.addEventListener(this.backwardButton, 'mouseup', this.backwardButtonMouseOutHandler, false, this, []);
 
 		this.scrollBackward();
 		this.scrollBackwardInterval = setInterval(this.scrollBackward.bind(this), 50);
@@ -544,32 +496,15 @@ Scrollbar.prototype = {
 	backwardButtonMouseUpHandler: function(e){
 		clearInterval(this.scrollBackwardInterval);
 		delete this.scrollBackwardInterval;
-		// unblock mousewheel
-		// change appearance
 
-		if (window.removeEventListener){ // modern browsers use removeEventListener
-			window.removeEventListener('mouseup', this._bindedBackwardButtonMouseUpHandler);
-			this.backwardButton.removeEventListener('mouseenter', this._bindedBackwardButtonMouseEnterHandler);
-			this.backwardButton.removeEventListener('mouseout', this._bindedBackwardButtonMouseOutHandler);
-		}
-		else if (window.detachEvent){ // ie8- use detachEvent
-			window.detachEvent('mouseup', this._bindedBackwardButtonMouseUpHandler);
-			this.backwardButton.detachEvent('mouseenter', this._bindedBackwardButtonMouseEnterHandler);
-			this.backwardButton.detachEvent('mouseout', this._bindedBackwardButtonMouseOutHandler);
-		}
+		// TODO unblock mousewheel
+		// TODO change appearance
 
-		delete this._bindedBackwardButtonMouseUpHandler;
-		delete this._bindedBackwardButtonMouseOutHandler;
-		delete this._bindedBackwardButtonMouseEnterHandler;
+		Idea.Util.removeEventListener(window, 'mouseup', this.backwardButtonMouseUpHandler, false, this, []);
+		Idea.Util.removeEventListener(this.backwardButton, 'mouseup', this.backwardButtonMouseEnterHandler, false, this, []);
+		Idea.Util.removeEventListener(this.backwardButton, 'mouseup', this.backwardButtonMouseOutHandler, false, this, []);		
+
 	},
-
-	pageBackwardEvent: new CustomEvent("pageBackward", {detail: {}, bubbles: true, cancelable: true}),
-	pageForwardEvent: new CustomEvent("pageForward", {detail: {}, bubbles: true, cancelable: true}),
-	scrollForwardEvent: new CustomEvent("scrollForward", {detail: {}, bubbles: true, cancelable: true}),
-	scrollBackwardEvent: new CustomEvent("scrollBackward", {detail: {}, bubbles: true, cancelable: true}),
-	scrollToEvent: new CustomEvent("scrollTo", {detail: {to:0.0-1.0}, bubbles: true, cancelable: true}),
-	extendSliderEvent: new CustomEvent("extendSlide", {detail: {}, bubbles: true, cancelable: true}),
-	contractSliderEvent: new CustomEvent("contractSlider", {detail: {}, bubbles: true, cancelable: true}),
 
 	// we should also listen to zoom-in/zoom-out events of the scrollable area
 	scrollForward: function(){

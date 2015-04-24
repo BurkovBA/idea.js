@@ -476,6 +476,9 @@
          * });
          * 
          * will log changes of color to console upon subject.color("#AAAAAA").
+         *
+         * Observer gets two parameters on input: newValue and oldValue, which are the new
+         * and old values of the changing property.
          */
 
         observe: function(subject, propertyName, observer){

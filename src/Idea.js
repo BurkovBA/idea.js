@@ -112,6 +112,10 @@ Idea = function(){
         this._hScrollbar = new this.Scrollbar(this.canvasAndScrollbars, this.canvas, Idea.Conf.canvasMinX, Idea.Conf.canvasMaxX, scrollbarWindowSize, 0, scrollbarScrollSize, undefined, undefined, Idea.Conf.defaultViewportWidth, 40, false);
         //Idea.Util.observe(this.canvas, "viewBox", this._hScrollbar.positionSlider.bind(this._hScrollbar));
 
+        Idea.Util.observe(this._vScrollbar, "slider", this.adjustViewboxToScrollbars.bind(this, this._vScrollbar, this._hScrollbar, true));
+        Idea.Util.observe(this._hScrollbar, "slider", this.adjustViewboxToScrollbars.bind(this, this._vScrollbar, this._hScrollbar, false));
+
+
         this._div.appendChild(this.canvasAndScrollbars);
 
         this.gui.tools = new this.Toolbar();
@@ -243,6 +247,27 @@ Idea.prototype = {
             this._selection.splice(0, this._selection.length);
             this._selection.push.apply(this._selection, widgets);
         }
+    },
+
+    adjustViewboxToScrollbars: function(vscrollbar, hscrollbar, vertical, newValue, oldValue){
+        var slider = newValue;
+
+        var viewBox = this.canvas.viewBox();
+        if (vertical){
+            viewBox.x = parseFloat(Idea.Conf.canvasMinX + (parseFloat(newValue.min) - vscrollbar.railMin()) / (vscrollbar.railMax() - vscrollbar.railMin()) * (Idea.Conf.canvasMaxX - Idea.Conf.canvasMinX));
+            viewBox.y = parseFloat(Idea.Conf.canvasMinY + (vscrollbar.slider().min - vscrollbar.railMin()) / (vscrollbar.railMax() - vscrollbar.railMin()) * (Idea.Conf.canvasMaxY - Idea.Conf.canvasMinY));
+            viewBox.width = (Idea.Conf.canvasMaxX - Idea.Conf.canvasMinX) / (parseFloat(newValue.max) - parseFloat(newValue.min));
+            viewBox.height = (Idea.Conf.canvasMaxY - Idea.Conf.canvasMinY) / (parseFloat(newValue.max) - parseFloat(newValue.min));
+        } 
+        else {
+            viewBox.x = parseFloat(Idea.Conf.canvasMinX + (parseFloat(newValue.min) - hscrollbar.railMin()) / (hscrollbar.railMax() - hscrollbar.railMin()) * (Idea.Conf.canvasMaxX - Idea.Conf.canvasMinX));
+            viewBox.x = parseFloat(Idea.Conf.canvasMinY + (parseFloat(newValue.min) - hscrollbar.railMin()) / (hscrollbar.railMax() - hscrollbar.railMin()) * (Idea.Conf.canvasMaxY - Idea.Conf.canvasMinY));
+            viewBox.width = (Idea.Conf.canvasMaxX - Idea.Conf.canvasMinX) / (parseFloat(newValue.max) - parseFloat(newValue.min));
+            viewBox.height = (Idea.Conf.canvasMaxY - Idea.Conf.canvasMinY) / (parseFloat(newValue.max) - parseFloat(newValue.min));
+        }
+        this.canvas.viewBox(viewBox);
+
+        // TODO move the other scrollbar's slider!
     }
 
 };

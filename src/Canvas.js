@@ -127,22 +127,6 @@
             }
         },
 
-        vScrollbarSliderMin: function(){
-            
-        },
-
-        vScrollbarSliderMax: function(){
-
-        },
-
-        hScrollbarSliderMin: function(){
-
-        },
-        
-        hScrollbarSliderMax: function(){
-
-        },
-
         /**
          *
          * Except for one notable difference addEventListener/removeEventLisntener are just 

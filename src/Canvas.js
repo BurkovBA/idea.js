@@ -126,44 +126,5 @@
             }
             return viewBox;            
         },
-
-        /**
-         *
-         * Except for one notable difference addEventListener/removeEventLisntener are just 
-         * proxies for canvas._canvas.addEventListener/removeEventListners.
-         * The difference is bindThis argument. Often you'd want listener's "this" argument to be
-         * the idea object. If bindThis is true, addEventListener binds listener's "this" to idea
-         * and stores the resulting binded method in an internal cache, while removeEventListener,
-         * if given "bindThis" argument, searches the storage for binded version of the listener
-         * and removes it.
-         *
-         */
-
-        // TODO: this might result in an error, if the same method was attached twice
-        addEventListener: function(eventType, listener, useCapture, bindThis){
-            if (bindThis){
-                if (!(listener in this.bindedListenersCache)){
-                    this.bindedListenersCache[listener] = listener.bind(this.idea);
-                    this._canvas.addEventListener(eventType, this.bindedListenersCache[listener], useCapture);
-                }
-                else {
-                    this._canvas.addEventListener(eventType, this.bindedListenersCache[listener], useCapture);
-                }
-            }
-            else {
-                this._canvas.addEventListener(eventType, listener, useCapture);                
-            }
-        },
-
-        removeEventListener: function(eventType, listener, useCapture, bindThis){
-            if (bindThis){
-                if (listener in this.bindedListenersCache){
-                    this._canvas.removeEventListener(eventType, this.bindedListenersCache[listener], useCapture);
-                }
-            }
-            else {
-                this._canvas.removeEventListener(eventType, listener, useCapture);                
-            }
-        }
     };
 })();

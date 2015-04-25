@@ -50,12 +50,11 @@
         var canvasCoords = Idea.Util.windowCoordsToCanvasCoords(event.clientX, event.clientY, this.canvas._canvas);
         console.log("canvasCoords = " + canvasCoords);
 
-
         // draw the base on canvas
         this._new = new Text(this, this.canvas._canvas, canvasCoords.x, canvasCoords.y, "", '#000000', '#000000');
 
         // remove this listener and add mouseover, mouseclick and keydown handlers
-        this.canvas.removeEventListener("click", mouseClick, false, true);
+        Idea.Util.removeEventListener(this.canvas._canvas, "click", mouseClick, false, this, []);
 
         this._bindedKeyDown = keyDown.bind(this);
         window.addEventListener("keypress", this._bindedKeyDown)

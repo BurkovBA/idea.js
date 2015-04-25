@@ -130,7 +130,7 @@
      * EVENT HANDLERS section. All the functions below should be bound to idea object, so that
      * "this" in them is idea object:
      *
-     * idea.canvas.addEventListener("click", baseMouseClick.bind(idea), false)
+     * Idea.Util.addEventListener(this.canvas._canvas, "click", baseMouseClick, false, this, []);
      */
 
     var baseMouseClick = function(e){
@@ -142,24 +142,22 @@
         this._new = new Line(this, this.canvas._canvas, canvasCoords.x, canvasCoords.y, canvasCoords.x, canvasCoords.y, "#000000", 1);
 
         // remove this listener and add mouseover, mouseclick and keydown handlers
-        this.canvas.removeEventListener("click", baseMouseClick, false, true);
+        Idea.Util.removeEventListener(this.canvas._canvas, "click", baseMouseClick, false, this, []);
 
-        this._bindedTipKeyDown = tipKeyDown.bind(this);
-        window.addEventListener("keypress", this._bindedTipKeyDown)
-        window.addEventListener("keydown", this._bindedTipKeyDown);
+        Idea.Util.addEventListener(window, "keypress", tipKeyDown, false, this, []);
+        Idea.Util.addEventListener(window, "keydown", tipKeyDown, false, this, []);
 
-        this.canvas.addEventListener("mousemove", tipMouseMove, false, true);
-        this.canvas.addEventListener("click", tipMouseClick, false, true);
+        Idea.Util.addEventListener(this.canvas._canvas, "mousemove", tipMouseMove, false, this, []);
+        Idea.Util.addEventListener(this.canvas._canvas, "click", tipMouseClick, false, this, []);
     };
 
     var returnFromLineCreation = function(){
         // remove creation listeners
-        window.removeEventListener("keypress", this._bindedTipKeyDown);
-        window.removeEventListener("keydown", this._bindedTipKeyDown);
-        delete this._bindedTipKeyDown;
+        Idea.Util.removeEventListener(window, "keypress", tipKeyDown, false, this, []);
+        Idea.Util.removeEventListener(window, "keydown", tipKeyDown, false, this, []);
 
-        this.canvas.removeEventListener("mousemove", tipMouseMove, false, true);
-        this.canvas.removeEventListener("click", tipMouseClick, false, true);
+        Idea.Util.removeEventListener(this.canvas._canvas, "mousemove", tipMouseMove, false, this, []);
+        Idea.Util.removeEventListener(this.canvas._canvas, "click", tipMouseClick, false, this, []);
 
         // untoggle the line creation button
         this.icon.toggle();

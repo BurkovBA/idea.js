@@ -80,7 +80,7 @@
             this.toggle();
             for (var i=0; i<this.handlers.length; i++){
                 var handler = this.handlers[i];
-                this.idea.canvas.addEventListener(handler[0], handler[1], handler[2], true);
+                Idea.Util.addEventListener(this.idea.canvas._canvas, handler[0], handler[1], handler[2], this.idea, []); //obj, eventType, listener, useCapture, thisArg, argumentsList
                 this.idea.icon = this;
             }
         }

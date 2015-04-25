@@ -262,20 +262,17 @@ Scrollbar.prototype = {
 
 		// check if it is on slider middle or edge - whether we move slider or resize it
 		if ( Math.abs(coord - slider.min) / (slider.max - slider.min) <= 0.2){ // this is near minimum edge - resize slider
-			console.log("slider resized");
 			// obj, eventType, listener, useCapture, thisArg, argumentsList
 			Idea.Util.addEventListener(window, 'mouseup', this.sliderMinResizeMouseUpHandler, false, this, []);
 			Idea.Util.addEventListener(window, 'mousemove', this.sliderMinResizeMouseMoveHandler, false, this, [])
 		}
 		else if ( Math.abs(coord - slider.max) / (slider.max - slider.min) <= 0.2 ) { // this is near maximum edge - resize slider
-			console.log("slider resized");
 			Idea.Util.addEventListener(window, 'mouseup', this.sliderMaxResizeMouseUpHandler, false, this, []);
 			Idea.Util.addEventListener(window, 'mousemove', this.sliderMaxResizeMouseMoveHandler, false, this, []);
 		}
 		else { // if middle
 			// attach mouse handlers to window, not document.documentElement (representing <html>)
 			// or mouse events beyond the browser window will be lost
-			console.log("slider dragged");
 			Idea.Util.addEventListener(window, 'mouseup', this.sliderDragMouseUpHandler, false, this, []);
 			Idea.Util.addEventListener(window, 'mousemove', this.sliderDragMouseMoveHandler, false, this, []);
 
@@ -400,8 +397,8 @@ Scrollbar.prototype = {
 
 		// button should continue scrolling, while you press the mouse button and keep pointer over it
 		Idea.Util.addEventListener(window, 'mouseup', this.forwardButtonMouseUpHandler, false, this, []);
-		Idea.Util.addEventListener(this.forwardButton, 'mouseup', this.forwardButtonMouseEnterHandler, false, this, []);
-		Idea.Util.addEventListener(this.forwardButton, 'mouseup', this.forwardButtonMouseOutHandler, false, this, []);
+		Idea.Util.addEventListener(window, 'mouseup', this.forwardButtonMouseEnterHandler, false, this, []);
+		Idea.Util.addEventListener(this.forwardButton, 'mouseout', this.forwardButtonMouseOutHandler, false, this, []);
 
 		this.scrollForward();
 		this.scrollForwardInterval = setInterval(this.scrollForward.bind(this), 50);
@@ -423,9 +420,9 @@ Scrollbar.prototype = {
 		// TODO unblock mousewheel
 		// TODO change appearance
 
-		Idea.Util.addRemoveListener(window, 'mouseup', this.forwardButtonMouseUpHandler, false, this, []);
-		Idea.Util.addRemoveListener(this.forwardButton, 'mouseup', this.forwardButtonMouseEnterHandler, false, this, []);
-		Idea.Util.addRemoveListener(this.forwardButton, 'mouseup', this.forwardButtonMouseOutHandler, false, this, []);
+		Idea.Util.removeEventListener(window, 'mouseup', this.forwardButtonMouseUpHandler, false, this, []);
+		Idea.Util.removeEventListener(window, 'mouseup', this.forwardButtonMouseEnterHandler, false, this, []);
+		Idea.Util.removeEventListener(this.forwardButton, 'mouseout', this.forwardButtonMouseOutHandler, false, this, []);
 	},
 
 	backwardButtonMouseDownHandler: function(e){
@@ -438,8 +435,8 @@ Scrollbar.prototype = {
 
 		// button should continue scrolling, while you press the mouse button and keep pointer over it
 		Idea.Util.addEventListener(window, 'mouseup', this.backwardButtonMouseUpHandler, false, this, []);
-		Idea.Util.addEventListener(this.backwardButton, 'mouseup', this.backwardButtonMouseEnterHandler, false, this, []);
-		Idea.Util.addEventListener(this.backwardButton, 'mouseup', this.backwardButtonMouseOutHandler, false, this, []);
+		Idea.Util.addEventListener(window, 'mouseup', this.backwardButtonMouseEnterHandler, false, this, []);
+		Idea.Util.addEventListener(this.backwardButton, 'mouseout', this.backwardButtonMouseOutHandler, false, this, []);
 
 		this.scrollBackward();
 		this.scrollBackwardInterval = setInterval(this.scrollBackward.bind(this), 50);
@@ -448,11 +445,11 @@ Scrollbar.prototype = {
 
 	backwardButtonMouseOutHandler: function(e){
 		clearInterval(this.scrollBackwardInterval);
-		delete this.scrollForwardInterval;
+		delete this.scrollBackwardInterval;
 	},
 
 	backwardButtonMouseEnterHandler: function(e){
-		this.scrollForwardInterval = setInterval(this.scrollBackward.bind(this), 50);
+		this.scrollBackwardInterval = setInterval(this.scrollBackward.bind(this), 50);
 	},
 
 	backwardButtonMouseUpHandler: function(e){
@@ -463,56 +460,25 @@ Scrollbar.prototype = {
 		// TODO change appearance
 
 		Idea.Util.removeEventListener(window, 'mouseup', this.backwardButtonMouseUpHandler, false, this, []);
-		Idea.Util.removeEventListener(this.backwardButton, 'mouseup', this.backwardButtonMouseEnterHandler, false, this, []);
-		Idea.Util.removeEventListener(this.backwardButton, 'mouseup', this.backwardButtonMouseOutHandler, false, this, []);		
+		Idea.Util.removeEventListener(window, 'mouseup', this.backwardButtonMouseEnterHandler, false, this, []);
+		Idea.Util.removeEventListener(this.backwardButton, 'mouseout', this.backwardButtonMouseOutHandler, false, this, []);		
 
 	},
 
 	// we should also listen to zoom-in/zoom-out events of the scrollable area
 	scrollForward: function(){
-		var sliderX = parseInt(this._slider.getAttribute("x"));
-		var sliderY = parseInt(this._slider.getAttribute("y"));
-		var sliderWidth = parseInt(this._slider.getAttribute("width"));
-		var sliderHeight = parseInt(this._slider.getAttribute("height"));
-		var railX = parseInt(this.rail.getAttribute("x"));
-		var railY = parseInt(this.rail.getAttribute("y"));		
-		var railWidth = parseInt(this.rail.getAttribute("width"));
-		var railHeight = parseInt(this.rail.getAttribute("height"));		
+		var railSize = this.railMax() - this.railMin();
+		var sliderSize = this.slider().max - this.slider().min;
 
-		if (this.vertical){
-			if (sliderY - railY + sliderHeight + this.scrollSize > railHeight) this._slider.setAttribute("y", railY + railHeight - sliderHeight);
-			else this._slider.setAttribute("y", sliderY + this.scrollSize); // move slider
-		}
-		else {
-			if (sliderX - railX + sliderWidth + this.scrollSize > railWidth) this._slider.setAttribute("x", railX + railWidth - sliderWidth);
-			else this._slider.setAttribute("x", sliderX + this.scrollSize); // move slider
-		}
-
-		var viewBox = this.scrollable.viewBox();
-		if (this.vertical) viewBox.y = viewBox.y + this.scrollSize;
-		else viewBox.x = viewBox.x + this.scrollSize;
-		this.scrollable.viewBox(viewBox);
+		if (this.slider().min - this.railMin() + sliderSize + this.scrollSize > railSize) this.slider({min: this.railMin() + railSize - sliderSize, max: this.railMin() + railSize});
+		else this.slider({min: this.slider().min + this.scrollSize, max: this.slider().max + this.scrollSize});
 	},
 
 	scrollBackward: function(){
-		var sliderX = parseInt(this._slider.getAttribute("x"));
-		var sliderY = parseInt(this._slider.getAttribute("y"));
-		var railX = parseInt(this.rail.getAttribute("x"));
-		var railY = parseInt(this.rail.getAttribute("y"));
+		var sliderSize = this.slider().max - this.slider().min;
 
-		if (this.vertical){
-			if (sliderY - railY - this.scrollSize < 0) this._slider.setAttribute("y", railY);
-			else this._slider.setAttribute("y", sliderY - this.scrollSize); // move slider
-		}
-		else {
-			if (sliderX - railX - this.scrollSize < 0) this._slider.setAttribute("x", railX);
-			else this._slider.setAttribute("x", sliderX - this.scrollSize); // move slider
-		}
-
-		var viewBox = this.scrollable.viewBox();
-		if (this.vertical) viewBox.y = viewBox.y - this.scrollSize;
-		else viewBox.x = viewBox.x - this.scrollSize;
-		this.scrollable.viewBox(viewBox);
+		if (this.slider().min - this.railMin() - this.scrollSize < 0) this.slider({min: this.railMin(), max: this.railMin() + sliderSize});
+		else this.slider({min: this.slider().min - this.scrollSize, max: this.slider().max - this.scrollSize});
 	},
 
 	pageForward: function(){},

@@ -397,7 +397,7 @@ Scrollbar.prototype = {
 
 		// button should continue scrolling, while you press the mouse button and keep pointer over it
 		Idea.Util.addEventListener(window, 'mouseup', this.forwardButtonMouseUpHandler, false, this, []);
-		Idea.Util.addEventListener(window, 'mouseup', this.forwardButtonMouseEnterHandler, false, this, []);
+		Idea.Util.addEventListener(this.forwardButton, 'mouseenter', this.forwardButtonMouseEnterHandler, false, this, []);
 		Idea.Util.addEventListener(this.forwardButton, 'mouseout', this.forwardButtonMouseOutHandler, false, this, []);
 
 		this.scrollForward();
@@ -421,7 +421,7 @@ Scrollbar.prototype = {
 		// TODO change appearance
 
 		Idea.Util.removeEventListener(window, 'mouseup', this.forwardButtonMouseUpHandler, false, this, []);
-		Idea.Util.removeEventListener(window, 'mouseup', this.forwardButtonMouseEnterHandler, false, this, []);
+		Idea.Util.removeEventListener(this.forwardButton, 'mouseenter', this.forwardButtonMouseEnterHandler, false, this, []);
 		Idea.Util.removeEventListener(this.forwardButton, 'mouseout', this.forwardButtonMouseOutHandler, false, this, []);
 	},
 
@@ -435,7 +435,7 @@ Scrollbar.prototype = {
 
 		// button should continue scrolling, while you press the mouse button and keep pointer over it
 		Idea.Util.addEventListener(window, 'mouseup', this.backwardButtonMouseUpHandler, false, this, []);
-		Idea.Util.addEventListener(window, 'mouseup', this.backwardButtonMouseEnterHandler, false, this, []);
+		Idea.Util.addEventListener(this.backwardButton, 'mouseenter', this.backwardButtonMouseEnterHandler, false, this, []);
 		Idea.Util.addEventListener(this.backwardButton, 'mouseout', this.backwardButtonMouseOutHandler, false, this, []);
 
 		this.scrollBackward();
@@ -460,7 +460,7 @@ Scrollbar.prototype = {
 		// TODO change appearance
 
 		Idea.Util.removeEventListener(window, 'mouseup', this.backwardButtonMouseUpHandler, false, this, []);
-		Idea.Util.removeEventListener(window, 'mouseup', this.backwardButtonMouseEnterHandler, false, this, []);
+		Idea.Util.removeEventListener(this.backwardButton, 'mouseenter', this.backwardButtonMouseEnterHandler, false, this, []);
 		Idea.Util.removeEventListener(this.backwardButton, 'mouseout', this.backwardButtonMouseOutHandler, false, this, []);		
 
 	},

@@ -71,7 +71,7 @@ var Scrollbar = function(father, scrollable, scrollableMin, scrollableMax, windo
 																		  markerWidth: "12",
 																		  markerHeight: "9",
 																		  orient: "auto"});
-	Idea.Util.createSVGElement(this.arrowTip, 'path', {d: "M 0 0 L 10 5 L 0 10", fill: "none", stroke:"#c0c0c0", "stroke-linecap":"square", "stroke-linejoin":"round", style:"box-shadow: white;"});
+	Idea.Util.createSVGElement(this.arrowTip, 'path', {d: "M 0 0 L 10 5 L 0 10", fill: "none", stroke:"#c0c0c0", "stroke-linecap":"square", "stroke-linejoin":"round", style:"box-shadow: 0 0 5px white;"});
 
 	/*
 	// innerShadow/innerGlow filter implementation takes helluva lot of code. Stolen from:
@@ -160,6 +160,9 @@ Scrollbar.prototype = {
 				this._slider.setAttribute("x", value.min);
 				this._slider.setAttribute("width", value.max - value.min);
 			}
+
+			this._sliderMin = value.min;
+			this._sliderMax = value.max;
 		}
 
 		else value = {min: this._sliderMin, max: this._sliderMax}; // if getter
@@ -259,17 +262,20 @@ Scrollbar.prototype = {
 
 		// check if it is on slider middle or edge - whether we move slider or resize it
 		if ( Math.abs(coord - slider.min) / (slider.max - slider.min) <= 0.2){ // this is near minimum edge - resize slider
+			console.log("slider resized");
 			// obj, eventType, listener, useCapture, thisArg, argumentsList
 			Idea.Util.addEventListener(window, 'mouseup', this.sliderMinResizeMouseUpHandler, false, this, []);
 			Idea.Util.addEventListener(window, 'mousemove', this.sliderMinResizeMouseMoveHandler, false, this, [])
 		}
 		else if ( Math.abs(coord - slider.max) / (slider.max - slider.min) <= 0.2 ) { // this is near maximum edge - resize slider
+			console.log("slider resized");
 			Idea.Util.addEventListener(window, 'mouseup', this.sliderMaxResizeMouseUpHandler, false, this, []);
 			Idea.Util.addEventListener(window, 'mousemove', this.sliderMaxResizeMouseMoveHandler, false, this, []);
 		}
 		else { // if middle
 			// attach mouse handlers to window, not document.documentElement (representing <html>)
 			// or mouse events beyond the browser window will be lost
+			console.log("slider dragged");
 			Idea.Util.addEventListener(window, 'mouseup', this.sliderDragMouseUpHandler, false, this, []);
 			Idea.Util.addEventListener(window, 'mousemove', this.sliderDragMouseMoveHandler, false, this, []);
 
@@ -304,7 +310,7 @@ Scrollbar.prototype = {
 			delta = this.railMin() - slider.min;
 		}
 
-		this.slider({min: slider.min + delta, max: slider.max + delta + sliderSize});
+		this.slider({min: slider.min + delta, max: slider.min + delta + sliderSize});
 	},
 
 	sliderDragMouseUpHandler: function(e){
@@ -475,7 +481,7 @@ Scrollbar.prototype = {
 
 		if (this.vertical){
 			if (sliderY - railY + sliderHeight + this.scrollSize > railHeight) this._slider.setAttribute("y", railY + railHeight - sliderHeight);
-			else this.slider.setAttribute("y", sliderY + this.scrollSize); // move slider
+			else this._slider.setAttribute("y", sliderY + this.scrollSize); // move slider
 		}
 		else {
 			if (sliderX - railX + sliderWidth + this.scrollSize > railWidth) this._slider.setAttribute("x", railX + railWidth - sliderWidth);

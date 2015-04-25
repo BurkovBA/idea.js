@@ -118,13 +118,13 @@
                 dimensions = viewBoxAttribute.split(" ");
                 dimensions.forEach(function(element, index, array){array[index] = parseInt(element);});
                 viewBox = {x: dimensions[0], y: dimensions[1], width: dimensions[2], height: dimensions[3]};
-                return viewBox;
             }
             else {
                 for (var key in viewBox) Idea.Util.intValidator(viewBox[key], "viewBox." + key);
                 viewBoxAttribute = viewBox.x + " " + viewBox.y + " " + viewBox.width + " " + viewBox.height;
                 this._canvas.setAttribute("viewBox", viewBoxAttribute);  //this._canvas.setAttributeNS(Idea.Util.SVGNS, "viewBox", viewBoxAttribute);
             }
+            return viewBox;            
         },
 
         /**

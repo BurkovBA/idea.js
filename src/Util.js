@@ -592,19 +592,43 @@
         },
 
         intValidator: function(arg, argName){
-            if (!Idea.Util.INTREGEX.test(arg)) throw new Error(argName + " should be int, got: '" + arg + "'!");
+            if (!Idea.Util.INTREGEX.test(arg)) {
+                var error = new Error(argName + " should be int, got: '" + arg + "'!");
+                console.log(error.stack);
+                throw error;
+            }
+        },
+
+        floatValidator: function(arg, argName){
+            if (isNaN(parseFloat(arg))) {
+                var error = new Error(argName + " should be float, got: '" + arg + "'!");
+                console.log(error.stack);
+                throw error;
+            }
         },
 
         colorValidator: function(arg, argName){
-            if (!Idea.Util.isHexColor(arg)) throw new Error(argName + " should be a color, got: '" + arg + "'!");
+            if (!Idea.Util.isHexColor(arg)) {
+                var error = new Error(argName + " should be a color, got: '" + arg + "'!");
+                console.log(error.stack);
+                throw error;
+            } 
         },
 
         stringValidator: function(arg, argName){
-            if (!arg instanceof String) throw new Error(argName + " should be a String, got: '" + arg + "'!")
+            if (!arg instanceof String) {
+                var error = new Error(argName + " should be a String, got: '" + arg + "'!");
+                console.log(error.stack);
+                throw error;
+            } 
         },
 
         widgetValidator: function(arg, argName){
-            if (!arg instanceof Idea.prototype.Widget) throw new Error(argName + "should be a Util.prototype.Widget subclass, got:'" + typeof arg + "'!");
+            if (!arg instanceof Idea.prototype.Widget) {
+                var error = new Error(argName + "should be a Util.prototype.Widget subclass, got:'" + typeof arg + "'!");
+                console.log(error.stack);
+                throw error;
+            }
         },
 
         transformValidator: function(arg, argName){

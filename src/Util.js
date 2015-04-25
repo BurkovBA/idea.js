@@ -514,7 +514,7 @@
             var bindedListener = listener.bind.apply(listener, thisAndArguments);
             obj.addEventListener(eventType, bindedListener, useCapture);
             // TODO PROPER HASHING FUNCTION
-            var hash = "_" + String(listener) + String(thisArg) + String(argumentsList);
+            var hash = Idea.Util.hash(String(eventType) + String(listener) + String(useCapture) + String(thisArg) + String(argumentsList));
             obj[hash] = bindedListener;
 
             }
@@ -524,9 +524,24 @@
         },
 
         removeEventListener: function(obj, eventType, listener, useCapture, thisArg, argumentsList){
-            var hash = "_" + String(listener) + String(thisArg) + String(argumentsList);            
+            try{
+            var hash = Idea.Util.hash(String(eventType) + String(listener) + String(useCapture) + String(thisArg) + String(argumentsList));        
             obj.removeEventListener(eventType, obj[hash], useCapture);
             delete obj[hash];
+            }
+            catch(e){
+                debugger;
+            }
+        },
+
+        /*
+         * Calcluates hash of a string. Taken from:
+         * http://stackoverflow.com/questions/7616461/generate-a-hash-from-string-in-javascript-jquery
+         * ie9+ due to use of reduce
+         */
+
+        hash: function(string){
+            return string.split("").reduce(function(a,b){a=((a<<5)-a)+b.charCodeAt(0);return a&a},0);            
         },
 
         /*
@@ -666,7 +681,7 @@
             individualTransformStings.forEach(function(el, index, array){
                 switch (true){
                     case /matrix\(.+\)/.test(el):
-                        match = /matrix\(([0-9]*[.]?[0-9]+),([0-9]*[.]?[0-9]+),([0-9]*[.]?[0-9]+),([0-9]*[.]?[0-9]+),([0-9]*[.]?[0-9]+),([0-9]*[.]?[0-9]+)\)/.exec(el);
+                        match = /matrix\((\-?[0-9]*[.]?[0-9]+),(\-?[0-9]*[.]?[0-9]+),(\-?[0-9]*[.]?[0-9]+),(\-?[0-9]*[.]?[0-9]+),(\-?[0-9]*[.]?[0-9]+),(\-?[0-9]*[.]?[0-9]+)\)/.exec(el);
                         transform = {
                             type: 'matrix',
                             a: parseFloat(match[1]),
@@ -678,7 +693,7 @@
                         };
                         break;
                     case /translate\(.+\)/.test(el):
-                        match = /translate\(([0-9]*[.]?[0-9]+),([0-9]*[.]?[0-9]+)\)/.exec(el);
+                        match = /translate\((\-?[0-9]*[.]?[0-9]+),(\-?[0-9]*[.]?[0-9]+)\)/.exec(el);
                         transform = {
                             type: 'translate',
                             x: parseFloat(match[1]),
@@ -692,7 +707,7 @@
                         };
                         break;
                     case /scale\(.+\)/.test(el):
-                        match = /scale\(([0-9]*[.]?[0-9]+),([0-9]*[.]?[0-9]+)\)/.exec(el);
+                        match = /scale\((\-?[0-9]*[.]?[0-9]+),(\-?[0-9]*[.]?[0-9]+)\)/.exec(el);
                         transform = {
                             type:'scale',
                             x: parseFloat(match[1]),
@@ -706,7 +721,7 @@
                         };
                         break;
                     case /rotate\(.+\)/.test(el):
-                        match = /rotate\(([0-9]*[.]?[0-9]+)(,([0-9]*[.]?[0-9]+),([0-9]*[.]?[0-9]+))*\)/.exec(el);
+                        match = /rotate\((\-?[0-9]*[.]?[0-9]+)(,(\-?[0-9]*[.]?[0-9]+),(\-?[0-9]*[.]?[0-9]+))*\)/.exec(el);
                         if (match[3] === undefined || match[4] === undefined){
                             transform = {
                                 type: 'rotate',
@@ -743,7 +758,7 @@
                         // TODO CALCULATE MATRIX
                         // TODO if match groups 2 and 3 don't exist
                     case /skewX\(.+\)/.test(el):
-                        match = /skewX\(([0-9]*[.]?[0-9]+)\)/.exec(el);
+                        match = /skewX\((\-?[0-9]*[.]?[0-9]+)\)/.exec(el);
                         transform = {
                             type: 'skewX',
                             angle: parseFloat(match[1]),
@@ -756,7 +771,7 @@
                         };
                         break;
                     case /skewY\(.+\)/.test(el):
-                        match = /skewY\(([0-9]*[.]?[0-9]+)\)/.exec(el);
+                        match = /skewY\((\-?[0-9]*[.]?[0-9]+)\)/.exec(el);
                         transform = {
                             type: 'skewY',
                             angle: parseFloat(match[1]),

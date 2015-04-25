@@ -70,8 +70,8 @@
         },
 
         translateMouseUp: function(obj, e){
-            Idea.Util.removeEventListener(this.canvas, "mousemove", this.translateMouseMove, false, this, [obj])
-            Idea.Util.removeEventListener(window, "mouseup", this.translateMouseUp, false, this, [obj]);
+            Idea.Util.removeEventListener(this.canvas._canvas, "mousemove", obj.translateMouseMove, false, this, [obj])
+            Idea.Util.removeEventListener(window, "mouseup", obj.translateMouseUp, false, this, [obj]);
             delete this._mouseDownCoords;
         },
 

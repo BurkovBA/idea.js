@@ -106,7 +106,11 @@
                 clientX: clientX,
                 clientY: clientY,
                 pageX: pageX,
-                pageY: pageY
+                pageY: pageY,
+                ctrlKey: event.ctrlKey,
+                altKey: event.altKey,
+                shiftKey: event.shiftKey,
+                metaKey: event.metaKey                
             }
             if (relatedTarget) normalizedEvent.relatedTarget = relatedTarget;
             return normalizedEvent;
@@ -170,6 +174,7 @@
             var normalizedEvent = {
                 nativeEvent: evt,
                 type: evt.type,
+                ctrlKey: evt.ctrlKey,
                 altKey: evt.altKey,
                 shiftKey: evt.shiftKey,
                 metaKey: evt.metaKey

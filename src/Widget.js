@@ -56,7 +56,7 @@
 
             this.selection([obj]);
                                     // obj, eventType, listener, useCapture, thisArg, argumentsList
-            Idea.Util.addEventListener(this.canvas, "mousemove", obj.translateMouseMove, false, this, [obj]);
+            Idea.Util.addEventListener(this.canvas._canvas, "mousemove", obj.translateMouseMove, false, this, [obj]);
             Idea.Util.addEventListener(window, "mouseup", obj.translateMouseUp, false, this, [obj]);
         },
 

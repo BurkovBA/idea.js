@@ -113,11 +113,14 @@ Idea = function(){
         Idea.Util.observe(this._vScrollbar, "slider", this.adjustViewboxToScrollbars.bind(this, this._vScrollbar, this._hScrollbar, true));
         Idea.Util.observe(this._hScrollbar, "slider", this.adjustViewboxToScrollbars.bind(this, this._vScrollbar, this._hScrollbar, false));
 
-
         this._div.appendChild(this.canvasAndScrollbars);
 
         this.gui.tools = new this.Toolbar();
         this._div.appendChild(this.gui.tools._div);
+
+        // observe selection, respond to Esc by clearing selection
+        Idea.Util.addEventListener(window, "keydown", this.keyDown, false, this, []);
+        Idea.Util.addEventListener(window, "keypress", this.keyDown, false, this, []);
 
         // create resize grip
         this._grip = document.createElement('div');
@@ -233,6 +236,17 @@ Idea.prototype = {
 
     appendSlide: function(slide){
         this.insertSlide(this.length, slide);
+    },
+
+    keyDown: function(e){
+        var event = Idea.Util.normalizeKeyboardEvent(e);
+        if (event == null) return; // just ignore this event, if it should be ignored
+
+        if (this.mode() === 'edit') { // if this is edit, not creation, clear selection
+            if (event.type == "keydown" && event.keyCode == 27) { // if this is keydown event on Escape key, clear selection
+                this.selection([]);
+            }
+        }
     },
 
     selection: function(widgets){

@@ -40,9 +40,8 @@ window.dispatchEvent(pageBackward);
 
 //TODO msie fireEvent
 
-var Scrollbar = function(father, scrollable, scrollableMin, scrollableMax, windowSize, windowCoord, scrollSize, x, y, width, height, vertical){
+var Scrollbar = function(father, sliderCoord, scrollSize, x, y, width, height, vertical){
 	this.father = father;
-	this.scrollable = scrollable; // TODO: remove this scrollable, instead completely rely on events?
 	this.vertical = vertical;
 
 	if (scrollSize == null){ // TODO: validator
@@ -50,12 +49,6 @@ var Scrollbar = function(father, scrollable, scrollableMin, scrollableMax, windo
 		else this.scrollSize = width/100;
 	}
 	else this.scrollSize = scrollSize;
-
-	if (windowSize == null){
-		if (vertical) this.windowSize = height/5;
-		else this.windowSize = height/5;
-	}
-	else this.windowSize = windowSize;
 
 	if (x === undefined) x = 0;
 	if (y === undefined) y = 0;
@@ -86,9 +79,13 @@ var Scrollbar = function(father, scrollable, scrollableMin, scrollableMax, windo
 	*/
 
 	// scrollbar's buttons with arrow labels: the arrow's line is invisible, but the marker at the tip is auto-oriented with lines help
-	var sliderCoord;
-	if (this.vertical) sliderCoord = parseInt(y + 20 + (windowCoord - scrollableMin) / (scrollableMax - scrollableMin) * (height-2*20));
-	else sliderCoord = parseInt(x + 20 + (windowCoord - scrollableMin) / (scrollableMax - scrollableMin) * (width-2*20));
+	if (sliderCoord === undefined){
+		if (this.vertical) sliderCoord = parseInt(y + 20 + (height-2*20)/2);
+		else sliderCoord = parseInt(x + 20 + (width-2*20)/2);
+	}
+	else{
+		sliderCoord = 20 + sliderCoord;
+	}
 
 	if (this.vertical) {
 		this.backwardButton = Idea.Util.createSVGElement(this.scrollbar, 'rect', {x:0, y:0, width:width, height:20, fill:"#31353c"});
@@ -100,7 +97,7 @@ var Scrollbar = function(father, scrollable, scrollableMin, scrollableMax, windo
 		this.trough = Idea.Util.createSVGElement(this.scrollbar, 'g', {});
 		this.rail = Idea.Util.createSVGElement(this.trough, 'rect', {x:0, y:20, width:width, height:height-40, fill:"#6f788a"}); // this is the clickable part of scrollbar, where the slider moves
 
-		var sliderHeight = parseInt( this.windowSize / (scrollableMax - scrollableMin) * (height - 2*20) );
+		var sliderHeight = parseInt( Idea.Conf.defaultViewboxHeight / (Idea.Conf.canvasMaxY - Idea.Conf.canvasMinY) * (height - 2*20) );
 		this._slider = Idea.Util.createSVGElement(this.trough, 'rect', {x:0, y:sliderCoord, width:width, height: sliderHeight, fill:"#31353c", stroke:"#808080", rx:"10", ry:"10"}); // this is the draggable slider, which scrolls the element, associated with scrollbar
 		this._slider.id = "slider";
 
@@ -118,7 +115,7 @@ var Scrollbar = function(father, scrollable, scrollableMin, scrollableMax, windo
 		this.trough = Idea.Util.createSVGElement(this.scrollbar, 'g', {});
 		this.rail = Idea.Util.createSVGElement(this.trough, 'rect', {x:20, y:0, width:width-40, height:height, fill:"#6f788a"}); // this is the clickable part of scrollbar, where the slider moves
 
-		var sliderWidth = parseInt( this.windowSize / (scrollableMax - scrollableMin) * (width - 2*20) );
+		var sliderWidth = parseInt( Idea.Conf.defaultViewboxWidth / (Idea.Conf.canvasMaxY - Idea.Conf.canvasMinY) * (width - 2*20) );
 		this._slider = Idea.Util.createSVGElement(this.trough, 'rect', {x:sliderCoord, y:0, width: sliderWidth, height:height, fill:"#31353c", stroke:"#808080", rx:"10", ry:"10"}); // this is the draggable slider, which scrolls the element, associated with scrollbar
 		this._slider.id = "slider";
 

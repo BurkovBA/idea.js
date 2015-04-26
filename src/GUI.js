@@ -178,6 +178,9 @@
         this.tabBar.appendChild(this.animationsTab);
         Idea.Util.addClass(this.animationsTab, 'toolbar-tab')
 
+        var hr = document.createElement('hr');
+        this._div.appendChild(hr);
+
         this.filePage = document.createElement('div');
         this._div.appendChild(this.filePage);
         Idea.Util.addClass(this.filePage, 'toolbar-page');

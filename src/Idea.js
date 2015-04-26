@@ -73,7 +73,6 @@ Idea = function(){
         this._div.style.border = "1px solid rgb(200,200,200)";
         this._div.style.padding = "3px";
         this._div.style.display = "inline-block";
-        //document.body.appendChild(this._div);
 
         this.layers = [];
         this._selection = [];
@@ -84,7 +83,6 @@ Idea = function(){
 
         this.gui = {};
 
-        //this.svg = Idea.Util.createSVGElement(this._div, 'svg', {width: , height: , viewBox: "0 0 " + (Idea.Conf.defaultViewportWidth+2*20) + " " + (Idea.Conf.defaultViewportHeight+2*20)});
         this.canvasAndScrollbars = document.createElement('div');
         this.canvasAndScrollbars.style.display = "inline-block";
         this.canvasAndScrollbars.style.border = "1px solid black";
@@ -282,20 +280,20 @@ Idea.prototype = {
                 // check, which side of the slider is resized and resize the corresponing size of the other slider proportionally
                 if (newValue.max !== oldValue.max){
                     // if the other slider bumps into rail's end
-                    if (hscrollbar.slider().max + Idea.Conf.defaultViewportWidth / Idea.Conf.defaultViewportHeight * (newValue.max - oldValue.max) > hscrollbar.railMax()){
-                        hscrollbar.slider({ min: hscrollbar.railMax() - Idea.Conf.defaultViewportWidth / Idea.Conf.defaultViewportHeight * (newValue.max - newValue.min), max: hscrollbar.railMax() })
+                    if (hscrollbar.slider().max + this.canvas.width() / this.canvas.height() * (newValue.max - oldValue.max) > hscrollbar.railMax()){
+                        hscrollbar.slider({ min: hscrollbar.railMax() - this.canvas.width() / this.canvas.height() * (newValue.max - newValue.min), max: hscrollbar.railMax() })
                     }
                     else {
-                        hscrollbar.slider({ min: hscrollbar.slider().min,  max: hscrollbar.slider().max + Idea.Conf.defaultViewportWidth / Idea.Conf.defaultViewportHeight * (newValue.max - oldValue.max) });
+                        hscrollbar.slider({ min: hscrollbar.slider().min,  max: hscrollbar.slider().max + this.canvas.width() / this.canvas.height() * (newValue.max - oldValue.max) });
                     }
                 }
                 else if (newValue.min !== oldValue.min){
                     // if the other slider bumps into the rail's beginning
-                    if (hscrollbar.slider().min + Idea.Conf.defaultViewportWidth / Idea.Conf.defaultViewportHeight * (newValue.min - oldValue.min) < hscrollbar.railMin()){
-                        hscrollbar.slider({ min: hscrollbar.slider().min, max: hscrollbar.railMin() + Idea.Conf.defaultViewportWidth / Idea.Conf.defaultViewportHeight * (newValue.max - newValue.min)});
+                    if (hscrollbar.slider().min + this.canvas.width() / this.canvas.height() * (newValue.min - oldValue.min) < hscrollbar.railMin()){
+                        hscrollbar.slider({ min: hscrollbar.slider().min, max: hscrollbar.railMin() + this.canvas.width() / this.canvas.height() * (newValue.max - newValue.min)});
                     }
                     else {
-                        hscrollbar.slider({ min: hscrollbar.slider().min + Idea.Conf.defaultViewportWidth / Idea.Conf.defaultViewportHeight * (newValue.min - oldValue.min),  max: hscrollbar.slider().max});
+                        hscrollbar.slider({ min: hscrollbar.slider().min + this.canvas.width() / this.canvas.height() * (newValue.min - oldValue.min),  max: hscrollbar.slider().max});
                     }
                     
                 }
@@ -307,20 +305,20 @@ Idea.prototype = {
                 // check, which side of the slider is resized and resize the corresponing size of the other slider proportionally                
                 if (newValue.max !== oldValue.max){
                     // if the other slider bumps into rail's end
-                    if (vscrollbar.slider().max + Idea.Conf.defaultViewportHeight / Idea.Conf.defaultViewportWidth * (newValue.max - oldValue.max) > vscrollbar.railMax()){
-                        vscrollbar.slider({ min: vscrollbar.railMax() - Idea.Conf.defaultViewportHeight / Idea.Conf.defaultViewportWidth * (newValue.max - newValue.min), max: vscrollbar.railMax() });
+                    if (vscrollbar.slider().max + this.canvas.height() / this.canvas.width() * (newValue.max - oldValue.max) > vscrollbar.railMax()){
+                        vscrollbar.slider({ min: vscrollbar.railMax() - this.canvas.height() / this.canvas.width() * (newValue.max - newValue.min), max: vscrollbar.railMax() });
                     }
                     else {
-                        vscrollbar.slider({ min: vscrollbar.slider().min,  max: vscrollbar.slider().max + Idea.Conf.defaultViewportHeight / Idea.Conf.defaultViewportWidth * (newValue.max - oldValue.max) });                        
+                        vscrollbar.slider({ min: vscrollbar.slider().min,  max: vscrollbar.slider().max + this.canvas.height() / this.canvas.width() * (newValue.max - oldValue.max) });                        
                     }
                 }
                 else if (newValue.min !== oldValue.min){
                     // if the other slider bumps into the rail's beginning
-                    if (vscrollbar.slider().min + Idea.Conf.defaultViewportHeight / Idea.Conf.defaultViewportWidth * (newValue.min - oldValue.min) < vscrollbar.railMin()){
-                        vscrollbar.slider({ min: vscrollbar.railMin(), max: vscrollbar.railMin() + Idea.Conf.defaultViewportWidth / Idea.Conf.defaultViewportHeight * (newValue.max - newValue.min)});
+                    if (vscrollbar.slider().min + this.canvas.height() / this.canvas.width() * (newValue.min - oldValue.min) < vscrollbar.railMin()){
+                        vscrollbar.slider({ min: vscrollbar.railMin(), max: vscrollbar.railMin() + this.canvas.width() / tihs.canvas.height() * (newValue.max - newValue.min)});
                     }
                     else {
-                        vscrollbar.slider({ min: vscrollbar.slider().min + Idea.Conf.defaultViewportHeight / Idea.Conf.defaultViewportWidth * (newValue.min - oldValue.min), max: vscrollbar.slider().max});
+                        vscrollbar.slider({ min: vscrollbar.slider().min + this.canvas.height() / this.canvas.width() * (newValue.min - oldValue.min), max: vscrollbar.slider().max});
                     }
                 }
                 Idea.Util.observe(vscrollbar, "slider", this.adjustViewboxToScrollbars.bind(this, vscrollbar, hscrollbar, true));

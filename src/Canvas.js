@@ -125,6 +125,6 @@
                 this._canvas.setAttribute("viewBox", viewBoxAttribute);  //this._canvas.setAttributeNS(Idea.Util.SVGNS, "viewBox", viewBoxAttribute);
             }
             return viewBox;            
-        },
+        }
     };
 })();

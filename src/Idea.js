@@ -279,10 +279,23 @@ Idea.prototype = {
                 Idea.Util.unobserve(hscrollbar, "slider", this.adjustViewboxToScrollbars.bind(this, vscrollbar, hscrollbar, false));
                 // check, which side of the slider is resized and resize the corresponing size of the other slider proportionally
                 if (newValue.max !== oldValue.max){
-                    hscrollbar.slider({ min: hscrollbar.slider().min,  max: hscrollbar.slider().max + Idea.Conf.defaultViewportWidth / Idea.Conf.defaultViewportHeight * (newValue.max - oldValue.max) });
+                    // if the other slider bumps into rail's end
+                    if (hscrollbar.slider().max + Idea.Conf.defaultViewportWidth / Idea.Conf.defaultViewportHeight * (newValue.max - oldValue.max) > hscrollbar.railMax()){
+                        hscrollbar.slider({ min: hscrollbar.railMax() - Idea.Conf.defaultViewportWidth / Idea.Conf.defaultViewportHeight * (newValue.max - newValue.min), max: hscrollbar.railMax() })
+                    }
+                    else {
+                        hscrollbar.slider({ min: hscrollbar.slider().min,  max: hscrollbar.slider().max + Idea.Conf.defaultViewportWidth / Idea.Conf.defaultViewportHeight * (newValue.max - oldValue.max) });
+                    }
                 }
                 else if (newValue.min !== oldValue.min){
-                    hscrollbar.slider({ min: hscrollbar.slider().min + Idea.Conf.defaultViewportWidth / Idea.Conf.defaultViewportHeight * (newValue.min - oldValue.min),  max: hscrollbar.slider().max});
+                    // if the other slider bumps into the rail's beginning
+                    if (hscrollbar.slider().min + Idea.Conf.defaultViewportWidth / Idea.Conf.defaultViewportHeight * (newValue.min - oldValue.min) < hscrollbar.railMin()){
+                        hscrollbar.slider({ min: hscrollbar.slider().min, max: hscrollbar.railMin() + Idea.Conf.defaultViewportWidth / Idea.Conf.defaultViewportHeight * (newValue.max - newValue.min)});
+                    }
+                    else {
+                        hscrollbar.slider({ min: hscrollbar.slider().min + Idea.Conf.defaultViewportWidth / Idea.Conf.defaultViewportHeight * (newValue.min - oldValue.min),  max: hscrollbar.slider().max});
+                    }
+                    
                 }
                 Idea.Util.observe(hscrollbar, "slider", this.adjustViewboxToScrollbars.bind(this, vscrollbar, hscrollbar, false));
             }
@@ -291,10 +304,22 @@ Idea.prototype = {
                 Idea.Util.unobserve(vscrollbar, "slider", this.adjustViewboxToScrollbars.bind(this, vscrollbar, hscrollbar, true));
                 // check, which side of the slider is resized and resize the corresponing size of the other slider proportionally                
                 if (newValue.max !== oldValue.max){
-                    vscrollbar.slider({ min: vscrollbar.slider().min,  max: vscrollbar.slider().max + Idea.Conf.defaultViewportHeight / Idea.Conf.defaultViewportWidth * (newValue.max - oldValue.max) });
+                    // if the other slider bumps into rail's end
+                    if (vscrollbar.slider().max + Idea.Conf.defaultViewportHeight / Idea.Conf.defaultViewportWidth * (newValue.max - oldValue.max) > vscrollbar.railMax()){
+                        vscrollbar.slider({ min: vscrollbar.railMax() - Idea.Conf.defaultViewportHeight / Idea.Conf.defaultViewportWidth * (newValue.max - newValue.min), max: vscrollbar.railMax() });
+                    }
+                    else {
+                        vscrollbar.slider({ min: vscrollbar.slider().min,  max: vscrollbar.slider().max + Idea.Conf.defaultViewportHeight / Idea.Conf.defaultViewportWidth * (newValue.max - oldValue.max) });                        
+                    }
                 }
                 else if (newValue.min !== oldValue.min){
-                    vscrollbar.slider({ min: vscrollbar.slider().max + Idea.Conf.defaultViewportHeight / Idea.Conf.defaultViewportWidth * (newValue.max - oldValue.max), max: vscrollbar.slider().max});
+                    // if the other slider bumps into the rail's beginning
+                    if (vscrollbar.slider().min + Idea.Conf.defaultViewportHeight / Idea.Conf.defaultViewportWidth * (newValue.min - oldValue.min) < vscrollbar.railMin()){
+                        vscrollbar.slider({ min: vscrollbar.railMin(), max: vscrollbar.railMin() + Idea.Conf.defaultViewportWidth / Idea.Conf.defaultViewportHeight * (newValue.max - newValue.min)});
+                    }
+                    else {
+                        vscrollbar.slider({ min: vscrollbar.slider().min + Idea.Conf.defaultViewportHeight / Idea.Conf.defaultViewportWidth * (newValue.min - oldValue.min), max: vscrollbar.slider().max});
+                    }
                 }
                 Idea.Util.observe(vscrollbar, "slider", this.adjustViewboxToScrollbars.bind(this, vscrollbar, hscrollbar, true));
             }

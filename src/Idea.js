@@ -264,42 +264,48 @@ Idea.prototype = {
     adjustViewboxToScrollbars: function(vscrollbar, hscrollbar, vertical, newValue, oldValue){
         var viewBox = this.canvas.viewBox();
 
-        // if one of the sliders was resized, resize the other one proportionally, so that viewBox proportions are preserved
-        if (parseInt(newValue.max) - parseInt(newValue.min) === parseInt(oldValue.max) - parseInt(oldValue.min)){
+
+        if (parseInt(newValue.max) - parseInt(newValue.min) === parseInt(oldValue.max) - parseInt(oldValue.min)){ // if one of the sliders was dragged
             if (vertical){
                 viewBox.y = parseInt(Idea.Conf.canvasMinY + (parseInt(newValue.min) - vscrollbar.railMin()) / (vscrollbar.railMax() - vscrollbar.railMin()) * (Idea.Conf.canvasMaxY - Idea.Conf.canvasMinY));
             }
             else {
                 viewBox.x = parseInt(Idea.Conf.canvasMinX + (parseInt(newValue.min) - hscrollbar.railMin()) / (hscrollbar.railMax() - hscrollbar.railMin()) * (Idea.Conf.canvasMaxX - Idea.Conf.canvasMinX));
             }
-        } // if slider dragged
-        else { // if slider resized
-            // in order to avoid infinite loop, temporarily unobserve the other slider before resizing it
-            var hRailSize = hscrollbar.railMin() - hscrollbar.railMax();
-            var vRailSize = vscrollbar.railMin() - vscrollbar.railMax();
-            if (vertical){
-                Idea.Util.unobserve(hscrollbar, "slider", this.adjustViewboxToScrollbars.bind(this, vscrollbar, hscrollbar, false));
-                hscrollbar.slider({min: hscrollbar.railMin() + Idea.Conf.defaultViewportWidth/Idea.Conf.defaultViewportHeight*vscrollbar.slider().min , max: hscrollbar.railMin() + Idea.Conf.defaultViewportWidth/Idea.Conf.defaultViewportHeight*vscrollbar.slider().max});
-                Idea.Util.observe(hscrollbar, "slider", this.adjustViewboxToScrollbars.bind(this, vscrollbar, hscrollbar, false));
-
-                // adjust the viewBox to slider positions
-                viewBox.x = parseInt(Idea.Conf.canvasMinX + (parseInt(newValue.min) - vscrollbar.railMin()) / (vscrollbar.railMax() - vscrollbar.railMin()) * (Idea.Conf.canvasMaxX - Idea.Conf.canvasMinX));
-                viewBox.y = parseInt(Idea.Conf.canvasMinY + (parseInt(newValue.min) - vscrollbar.railMin()) / (vscrollbar.railMax() - vscrollbar.railMin()) * (Idea.Conf.canvasMaxY - Idea.Conf.canvasMinY));
-                viewBox.width = parseInt( (parseInt(newValue.max) - parseInt(newValue.min)) / (vscrollbar.railMax() - vscrollbar.railMin()) * (Idea.Conf.canvasMaxX - Idea.Conf.canvasMinX));
-                viewBox.height = parseInt( (parseInt(newValue.max) - parseInt(newValue.min)) / (vscrollbar.railMax() - vscrollbar.railMin()) * (Idea.Conf.canvasMaxY - Idea.Conf.canvasMinY));                
-            }
-            else{
-                Idea.Util.unobserve(vscrollbar, "slider", this.adjustViewboxToScrollbars.bind(this, vscrollbar, hscrollbar, true));
-                vscrollbar.slider({min: vscrollbar.railMin() + Idea.Conf.defaultViewportHeight/Idea.Conf.defaultViewportWidth*hscrollbar.slider().min, max: vscrollbar.railMin() + Idea.Conf.defaultViewportHeight/Idea.Conf.defaultViewportWidth*hscrollbar.slider().max});
-                Idea.Util.observe(vscrollbar, "slider", this.adjustViewboxToScrollbars.bind(this, vscrollbar, hscrollbar, true));
-
-                // adjust the viewBox to slider positions
-                viewBox.x = parseInt(Idea.Conf.canvasMinX + (parseInt(newValue.min) - hscrollbar.railMin()) / (hscrollbar.railMax() - hscrollbar.railMin()) * (Idea.Conf.canvasMaxX - Idea.Conf.canvasMinX));
-                viewBox.y = parseInt(Idea.Conf.canvasMinY + (parseInt(newValue.min) - hscrollbar.railMin()) / (hscrollbar.railMax() - hscrollbar.railMin()) * (Idea.Conf.canvasMaxY - Idea.Conf.canvasMinY));
-                viewBox.width = parseInt( (parseInt(newValue.max) - parseInt(newValue.min)) / (hscrollbar.railMax() - hscrollbar.railMin()) * (Idea.Conf.canvasMaxX - Idea.Conf.canvasMinX));
-                viewBox.height = parseInt( (parseInt(newValue.max) - parseInt(newValue.min)) / (hscrollbar.railMax() - hscrollbar.railMin()) * (Idea.Conf.canvasMaxY - Idea.Conf.canvasMinY));
-            }
         }
+        else { // if one of the sliders was resized, resize the other one proportionally, so that viewBox proportions are preserved
+            if (vertical){
+                // in order to avoid infinite loop, temporarily unobserve the other slider before resizing it
+                Idea.Util.unobserve(hscrollbar, "slider", this.adjustViewboxToScrollbars.bind(this, vscrollbar, hscrollbar, false));
+                // check, which side of the slider is resized and resize the corresponing size of the other slider proportionally
+                if (newValue.max !== oldValue.max){
+                    hscrollbar.slider({ min: hscrollbar.slider().min,  max: hscrollbar.slider().max + Idea.Conf.defaultViewportWidth / Idea.Conf.defaultViewportHeight * (newValue.max - oldValue.max) });
+                }
+                else if (newValue.min !== oldValue.min){
+                    hscrollbar.slider({ min: hscrollbar.slider().min + Idea.Conf.defaultViewportWidth / Idea.Conf.defaultViewportHeight * (newValue.min - oldValue.min),  max: hscrollbar.slider().max});
+                }
+                Idea.Util.observe(hscrollbar, "slider", this.adjustViewboxToScrollbars.bind(this, vscrollbar, hscrollbar, false));
+            }
+            else {
+                // in order to avoid infinite loop, temporarily unobserve the other slider before resizing it
+                Idea.Util.unobserve(vscrollbar, "slider", this.adjustViewboxToScrollbars.bind(this, vscrollbar, hscrollbar, true));
+                // check, which side of the slider is resized and resize the corresponing size of the other slider proportionally                
+                if (newValue.max !== oldValue.max){
+                    vscrollbar.slider({ min: vscrollbar.slider().min,  max: vscrollbar.slider().max + Idea.Conf.defaultViewportHeight / Idea.Conf.defaultViewportWidth * (newValue.max - oldValue.max) });
+                }
+                else if (newValue.min !== oldValue.min){
+                    vscrollbar.slider({ min: vscrollbar.slider().max + Idea.Conf.defaultViewportHeight / Idea.Conf.defaultViewportWidth * (newValue.max - oldValue.max), max: vscrollbar.slider().max});
+                }
+                Idea.Util.observe(vscrollbar, "slider", this.adjustViewboxToScrollbars.bind(this, vscrollbar, hscrollbar, true));
+            }
+
+            // adjust the viewBox to slider positions
+            viewBox.x = parseInt(Idea.Conf.canvasMinX + (parseInt(hscrollbar.slider().min) - hscrollbar.railMin()) / (hscrollbar.railMax() - hscrollbar.railMin()) * (Idea.Conf.canvasMaxX - Idea.Conf.canvasMinX));
+            viewBox.y = parseInt(Idea.Conf.canvasMinY + (parseInt(vscrollbar.slider().min) - vscrollbar.railMin()) / (vscrollbar.railMax() - vscrollbar.railMin()) * (Idea.Conf.canvasMaxY - Idea.Conf.canvasMinY));
+            viewBox.width = parseInt( (parseInt(hscrollbar.slider().max) - parseInt(hscrollbar.slider().min)) / (hscrollbar.railMax() - hscrollbar.railMin()) * (Idea.Conf.canvasMaxX - Idea.Conf.canvasMinX));
+            viewBox.height = parseInt( (parseInt(vscrollbar.slider().max) - parseInt(vscrollbar.slider().min)) / (vscrollbar.railMax() - vscrollbar.railMin()) * (Idea.Conf.canvasMaxY - Idea.Conf.canvasMinY));
+        }
+
         // write out new viewBox value
         this.canvas.viewBox(viewBox);
     }

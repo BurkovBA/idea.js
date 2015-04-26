@@ -348,8 +348,8 @@ Scrollbar.prototype = {
 		if (coord < this.railMin()) { // sliderMin shouldn't be less than railMin
 			coord = this.railMin();
 		} 
-		else if (coord >= slider.max) { // sliderMin shouldn't be too close to sliderMax
-			coord = slider.max - 1;
+		else if (coord >= slider.max - Idea.Conf.minimalSliderSize) { // sliderMin shouldn't be too close to sliderMax
+			coord = slider.max - Idea.Conf.minimalSliderSize;
 		}
 		
 		this.slider({min:coord, max:slider.max});
@@ -374,11 +374,11 @@ Scrollbar.prototype = {
 		else {coord = canvasCoords.x;}
 		var slider = this.slider();
 
-		if (coord > this.railMax()) { // sliderMin shouldn't be less than railMin
+		if (coord > this.railMax()) { // sliderMax shouldn't be greater than railMax
 			coord = this.railMax();
 		} 
-		else if (coord <= slider.min) { // sliderMin shouldn't be too close to sliderMax
-			coord = slider.min - 1;
+		else if (coord <= slider.min + Idea.Conf.minimalSliderSize) { // sliderMin shouldn't be too close to sliderMax
+			coord = slider.min + Idea.Conf.minimalSliderSize;
 		}
 		
 		this.slider({min: slider.min, max: coord});

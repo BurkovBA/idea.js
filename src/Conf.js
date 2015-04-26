@@ -14,6 +14,7 @@
         objectIconHeight: 40, // this is the size of miniature
 
     	scrollbarScrollsPerPage: 20, // how many lines per page are there in vertical scrollbar or how many chars per line in horizontal scrollbar
+        minimalSliderSize: 50, // the least amount of pixels a scrollbar's slider can take
 
         framerate: 25
     };

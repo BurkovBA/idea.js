@@ -315,7 +315,7 @@ Idea.prototype = {
                 else if (newValue.min !== oldValue.min){
                     // if the other slider bumps into the rail's beginning
                     if (vscrollbar.slider().min + this.canvas.height() / this.canvas.width() * (newValue.min - oldValue.min) < vscrollbar.railMin()){
-                        vscrollbar.slider({ min: vscrollbar.railMin(), max: vscrollbar.railMin() + this.canvas.width() / tihs.canvas.height() * (newValue.max - newValue.min)});
+                        vscrollbar.slider({ min: vscrollbar.railMin(), max: vscrollbar.railMin() + this.canvas.width() / this.canvas.height() * (newValue.max - newValue.min)});
                     }
                     else {
                         vscrollbar.slider({ min: vscrollbar.slider().min + this.canvas.height() / this.canvas.width() * (newValue.min - oldValue.min), max: vscrollbar.slider().max});

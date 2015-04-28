@@ -1,0 +1,130 @@
+/* @import url(http://fonts.googleapis.com/css?family=Open+Sans); */
+
+@font-face {
+    font-family: 'ambleregular';
+    src: url('fonts/amble_regular_macroman/Amble-Regular-webfont.eot');
+    src: url('fonts/amble_regular_macroman/Amble-Regular-webfont.eot?#iefix') format('embedded-opentype'),
+         url('fonts/amble_regular_macroman/Amble-Regular-webfont.woff') format('woff'),
+         url('fonts/amble_regular_macroman/Amble-Regular-webfont.ttf') format('truetype'),
+         url('fonts/amble_regular_macroman/Amble-Regular-webfont.svg#ambleregular') format('svg');
+    font-weight: normal;
+    font-style: normal;
+
+}
+
+@font-face {
+    font-family: 'amblelight';
+    src: url('fonts/amble_light_macroman/Amble-Light-webfont.eot');
+    src: url('fonts/amble_light_macroman/Amble-Light-webfont.eot?#iefix') format('embedded-opentype'),
+         url('fonts/amble_light_macroman/Amble-Light-webfont.woff') format('woff'),
+         url('fonts/amble_light_macroman/Amble-Light-webfont.ttf') format('truetype'),
+         url('fonts/amble_light_macroman/Amble-Light-webfont.svg#amblelight') format('svg');
+    font-weight: normal;
+    font-style: normal;
+
+}
+
+.toolbar {
+	font-size: 20px;
+	/*font-family: 'Open Sans', sans-serif;*/
+	/*font-family: Verdana, Tahoma, sans-serif;*/
+	font-family: 'amblelight';
+	display: inline-block;
+	vertical-align: top;
+	/*overflow: scrollbar;*/
+	background: #303030;
+	border: 1px solid #000;
+	margin: 0 0 0 3;
+}
+
+hr {
+	margin-left: 10px;
+	margin-right: 10px;
+	border: none;
+	border-top: 1px solid rgba(0, 0, 0, 0.7);
+	border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+	clear: both;
+}
+
+.toolbar-tabbar {
+	display: inline-block;
+	margin-top: 10px;
+	margin-left: 10px;
+}
+
+.toolbar-tab {
+	display: inline-block;
+	padding: 5px;
+	color: #aaaaaa;
+	background-color: #383838;
+	box-shadow: 0px 0px 2px black;
+	cursor: pointer;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.08);	
+	-webkit-transition-duration: 0.3s;
+    transition-duration: 0.3s;
+    -webkit-transition-property: color, background-color;
+    transition-property: color, background-color;
+}
+
+.toolbar-tab:hover {
+	color: rgb(180, 180, 180);
+	background-color: rgba(0, 0, 0, 0.1);
+}
+
+.toolbar-tab.active {
+	display: inline-block;
+	color: white;
+	background-color: rgba(0, 0, 0, 0.2);
+}
+
+.toolbar-page {
+	display: none;
+}
+
+.toolbar-page.active {
+	display: block;
+}
+
+.cathegory-objects {
+	margin-top: 10px;
+	margin-left: 10px;
+}
+
+.icon {
+	margin-left: 5px;
+	margin-top: 5px;
+	border-style: none;
+	background-color: #383838;
+	cursor: pointer;
+}
+
+.icon.on {
+	border-style: none;
+	background-color: rgb(52, 64, 71);
+}
+
+input, textarea {
+	box-shadow: rgba(0,0,0, 0.1) 0px 0px 8px;
+    -webkit-box-shadow: rgba(0,0,0, 0.1) 0px 0px 8px;
+	padding: 9px;
+	border: solid 1px #e5e5e5;
+	outline: 0;
+	font: normal 13px/100% Verdana, Tahoma, sans-serif;
+	width: 200px;
+	background: #FFFFFF;
+}
+
+textarea {
+	height: 150px;
+	line-height: 150%;
+}
+
+input:hover, textarea:hover,
+input:focus, textarea:focus{
+	border-color: #c9c9c9;
+}
+
+.form label {
+	margin-left: 10px;
+	color: #999999;
+}

@@ -286,7 +286,7 @@ Idea.prototype = {
 
         // unobserve scrollbar sliders until drag ends - we'll calculate their coordinates here manually
         Idea.Util.unobserve(this._hScrollbar, "slider", this.adjustViewboxToScrollbars.bind(this, this._vScrollbar, this._hScrollbar, false));
-        Idea.Util.unobserve(this._vScrollbar, "slider", this.adjustViewboxToScrollbars.bind(this, this._vScrollbar, this._hScrollbar, false));        
+        Idea.Util.unobserve(this._vScrollbar, "slider", this.adjustViewboxToScrollbars.bind(this, this._vScrollbar, this._hScrollbar, true));        
     },
 
     mouseMove: function(e){
@@ -345,7 +345,7 @@ Idea.prototype = {
 
         // observe scorllbars again
         Idea.Util.observe(this._hScrollbar, "slider", this.adjustViewboxToScrollbars.bind(this, this._vScrollbar, this._hScrollbar, false));
-        Idea.Util.observe(this._vScrollbar, "slider", this.adjustViewboxToScrollbars.bind(this, this._vScrollbar, this._hScrollbar, false));        
+        Idea.Util.observe(this._vScrollbar, "slider", this.adjustViewboxToScrollbars.bind(this, this._vScrollbar, this._hScrollbar, true));        
     },
 
     /*
@@ -363,7 +363,7 @@ Idea.prototype = {
         var event = Idea.Util.normalizeWheel(event);
 
         Idea.Util.unobserve(hscrollbar, "slider", this.adjustViewboxToScrollbars.bind(this, vscrollbar, hscrollbar, false));
-        Idea.Util.unobserve(vscrollbar, "slider", this.adjustViewboxToScrollbars.bind(this, vscrollbar, hscrollbar, false));
+        Idea.Util.unobserve(vscrollbar, "slider", this.adjustViewboxToScrollbars.bind(this, vscrollbar, hscrollbar, true));
 
         // calculate the fractions of viewport that should go forward/backward depending on the mouse pointer location
         var canvasCoords = Idea.Util.windowCoordsToCanvasCoords(event.clientX, event.clientY, this.canvas._canvas);
@@ -451,7 +451,7 @@ Idea.prototype = {
         this.canvas.viewBox(viewBox);
 
         Idea.Util.observe(this._hScrollbar, "slider", this.adjustViewboxToScrollbars.bind(this, this._vScrollbar, this._hScrollbar, false));
-        Idea.Util.observe(this._vScrollbar, "slider", this.adjustViewboxToScrollbars.bind(this, this._vScrollbar, this._hScrollbar, false));
+        Idea.Util.observe(this._vScrollbar, "slider", this.adjustViewboxToScrollbars.bind(this, this._vScrollbar, this._hScrollbar, true));
     },
 
     adjustViewboxToScrollbars: function(vscrollbar, hscrollbar, vertical, newValue, oldValue){

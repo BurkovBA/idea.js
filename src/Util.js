@@ -737,6 +737,11 @@
             attributes: {type: 'text'}
         },
 
+        intWidget: {
+            el: 'input',
+            attributes: {type: 'text'}
+        },
+
         intValidator: function(arg, argName){
             if (!Idea.Util.INTREGEX.test(arg)) {
                 var error = new Error(argName + " should be int, got: '" + arg + "'!");

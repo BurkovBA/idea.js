@@ -382,17 +382,17 @@ Idea.prototype = {
                 // just enlarge the scrollbars to the full size of the rail and set the viewBox to full canvas
                 hscrollbar.slider({min: hscrollbar.railMin(), max: hscrollbar.railMax()});
                 vscrollbar.slider({min: vscrollbar.railMin(), max: vscrollbar.railMax()});
-                this.canvas.viewBox({x: this.canvasMinX, y: this.canvas.MinY, width: (this.canvasMaxX - this.canvasMinX), height: (this.canvasMaxY - this.canvasMinY)});
+                this.canvas.viewBox({x: Idea.Conf.canvasMinX, y: Idea.Conf.canvasMinY, width: (Idea.Conf.canvasMaxX - Idea.Conf.canvasMinX), height: (Idea.Conf.canvasMaxY - Idea.Conf.canvasMinY)});
             }
             else {
                 if ( hscrollbar.slider().min - leftDelta < hscrollbar.railMin() ){
-                    // decrease left delta in favor of right delta, it might happen that after change of right delta, right delta is not passing the limit now
                     rightDelta = rightDelta + ( hscrollbar.slider().min - hscrollbar.railMin());
+                    if (rightDelta + hscrollbar.slider().max > hscrollbar.railMax()) rightDelta = hscrollbar.railMax() - hscrollbar.slider().max;
                     leftDelta = hscrollbar.slider().min - hscrollbar.railMin();
                 }
                 else if ( hscrollbar.slider().max + rightDelta > hscrollbar.railMax() ){
-                    // decrease right delta in favor of left delta
                     leftDelta = leftDelta + (hscrollbar.railMax() - hscrollbar.slider().max);
+                    if (hscrollbar.slider().min - leftDelta < hscrollbar.slider().min) leftDelta = hscrollbar.slider().min - hscrollbar.railMin();
                     rightDelta = (hscrollbar.railMax() - hscrollbar.slider().max);
                 }
                 hscrollbar.slider({min: hscrollbar.slider().min - leftDelta, max: hscrollbar.slider().max + rightDelta});
@@ -400,10 +400,12 @@ Idea.prototype = {
                 // TODO: it might happen that after decreasing one side and increasing another one, another side has grown over the edge
                 if ( vscrollbar.slider().min - topDelta < vscrollbar.railMin() ){
                     bottomDelta = bottomDelta + (vscrollbar.slider().min - vscrollbar.railMin());
+                    if (bottomDelta + vscrollbar.slider().max > vscrollbar.railMax()) bottomDelta = vscrollbar.railMax() - vscrollbar.slider().max;
                     topDelta = vscrollbar.slider().min - vscrollbar.railMin();
                 }
                 else if ( vscrollbar.slider().max + bottomDelta > vscrollbar.railMax() ){
                     topDelta = topDelta + (vscrollbar.railMax() - vscrollbar.slider().max);
+                    if (vscrollbar.slider().min - topDelta < vscrollbar.railMin()) topDelta = vscrollbar.slider().min - vscrollbar.railMin();
                     bottomDelta = (vscrollbar.railMax() - vscrollbar.slider().max);
                 }
                 vscrollbar.slider({min: vscrollbar.slider().min - leftDelta, max: vscrollbar.slider().max + rightDelta});                
@@ -412,31 +414,24 @@ Idea.prototype = {
         else { // if this is zoom in
             var sumOfDeltas;
 
+            // if new slider becomes too small size
             if ( (hscrollbar.slider().max - rightDelta) - (hscrollbar.slider().min - leftDelta) <  Idea.Conf.minimalSliderSize ){
-                // this new slider becomes too small size
                 sumOfDeltas = leftDelta + rightDelta;
-                leftDelta = parseInt(leftDelta / sumOfDeltas * Idea.Conf.minimalSliderSize);
-                rightDelta = parseInt(rightDelta / sumOfDeltas * Idea.Conf.minimalSliderSize);
+                leftDelta = parseInt(leftDelta / sumOfDeltas * (hscrollbar.slider().max - hscrollbar.slider().min - Idea.Conf.minimalSliderSize));
+                rightDelta = parseInt(rightDelta / sumOfDeltas * (hscrollbar.slider().max - hscrollbar.slider().min - Idea.Conf.minimalSliderSize));
                 // TODO: it might be necessary to resize the other slider to preserve canvas proportions
             }
             hscrollbar.slider({min: hscrollbar.slider().min + leftDelta, max: hscrollbar.slider().max - rightDelta});
 
+            // if new slider becomes too small size
             if ( (vscrollbar.slider().max - bottomDelta) - (vscrollbar.slider().min - topDelta) <  Idea.Conf.minimalSliderSize ){
-                // this new slider becomes too small size
                 sumOfDeltas = topDelta + bottomDelta;
-                topDelta = parseInt(topDelta / sumOfDeltas * Idea.Conf.minimalSliderSize);
-                bottomDelta = parseInt(bottomDelta / sumOfDeltas * Idea.Conf.minimalSliderSize);
+                topDelta = parseInt(topDelta / sumOfDeltas * (vscrollbar.slider().max - vscrollbar.slider().min - Idea.Conf.minimalSliderSize));
+                bottomDelta = parseInt(bottomDelta / sumOfDeltas * (vscrollbar.slider().max - vscrollbar.slider().min - Idea.Conf.minimalSliderSize));
                 // TODO: it might be necessary to resize the other slider to preserve canvas proportions
             }
             vscrollbar.slider({min: vscrollbar.slider().min + topDelta, max: vscrollbar.slider().max - bottomDelta});            
         }
-
-        /*
-        console.log("hscrollbar.slider = " + JSON.stringify(hscrollbar.slider()));
-        console.log("hscrollbar railMin =" + hscrollbar.railMin() + ", hscrollbar railMax = " + hscrollbar.railMax());
-        console.log("vscrollbar.slider = " + JSON.stringify(vscrollbar.slider()));
-        console.log("vscrollbar railMin = " + vscrollbar.railMin() + ", vscrollbar railMax = " + vscrollbar.railMax());
-        */
 
         // adjust the viewBox to slider positions
         var viewBox = this.canvas.viewBox();
@@ -445,6 +440,8 @@ Idea.prototype = {
         viewBox.y = parseInt(Idea.Conf.canvasMinY + (parseInt(vscrollbar.slider().min) - vscrollbar.railMin()) / (vscrollbar.railMax() - vscrollbar.railMin()) * (Idea.Conf.canvasMaxY - Idea.Conf.canvasMinY));
         viewBox.width = parseInt( (parseInt(hscrollbar.slider().max) - parseInt(hscrollbar.slider().min)) / (hscrollbar.railMax() - hscrollbar.railMin()) * (Idea.Conf.canvasMaxX - Idea.Conf.canvasMinX));
         viewBox.height = parseInt( (parseInt(vscrollbar.slider().max) - parseInt(vscrollbar.slider().min)) / (vscrollbar.railMax() - vscrollbar.railMin()) * (Idea.Conf.canvasMaxY - Idea.Conf.canvasMinY));
+
+        if ((viewBox.width < 0) || (viewBox.height < 0)) debugger;
 
         // write out new viewBox value
         this.canvas.viewBox(viewBox);

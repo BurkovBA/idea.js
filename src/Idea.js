@@ -123,6 +123,9 @@ Idea = function(){
         Idea.Util.addEventListener(window, "keydown", this.keyDown, false, this, []);
         Idea.Util.addEventListener(window, "keypress", this.keyDown, false, this, []);
 
+        // add event handler for dragging the canvas
+        Idea.Util.addEventListener(this.canvas._canvas, "mousedown", this.mouseDown, false, this, []);
+
         // create resize grip
         this._grip = document.createElement('div');
         this._grip.style.width = 10;
@@ -239,17 +242,6 @@ Idea.prototype = {
         this.insertSlide(this.length, slide);
     },
 
-    keyDown: function(e){
-        var event = Idea.Util.normalizeKeyboardEvent(e);
-        if (event == null) return; // just ignore this event, if it should be ignored
-
-        if (this.mode() === 'edit') { // if this is edit, not creation, clear selection
-            if (event.type == "keydown" && event.keyCode == 27) { // if this is keydown event on Escape key, clear selection
-                this.selection([]);
-            }
-        }
-    },
-
     selection: function(widgets){
         if (widgets === undefined) {
             return this._selection;
@@ -262,8 +254,99 @@ Idea.prototype = {
         }
     },
 
+    /*
+     * Event handlers, attached to idea.canvas or window and where "this" argument is Idea object.
+     * Also, helper functions are here.
+     */
 
+    keyDown: function(e){
+        var event = Idea.Util.normalizeKeyboardEvent(e);
+        if (event == null) return; // just ignore this event, if it should be ignored
 
+        if (this.mode() === 'edit') { // if this is edit, not creation, clear selection
+            if (event.type == "keydown" && event.keyCode == 27) { // if this is keydown event on Escape key, clear selection
+                this.selection([]);
+            }
+        }
+    },
+
+    mouseDown: function(e){
+        e.preventDefault();
+        e.stopPropagation();
+
+        // TODO check it's left mouse button
+        // TODO block mousewheel
+
+        // cache mouse pointer location to calulate canvas offset
+        var event = Idea.Util.normalizeMouseEvent(e);
+        this.previousMouseCoords = {x: event.clientX, y: event.clientY};
+
+        Idea.Util.addEventListener(window, "mouseup", this.mouseUp, false, this, []);
+        Idea.Util.addEventListener(this.canvas._canvas, "mousemove", this.mouseMove, false, this, []);
+
+        // unobserve scrollbar sliders until drag ends - we'll calculate their coordinates here manually
+        Idea.Util.unobserve(this._hScrollbar, "slider", this.adjustViewboxToScrollbars.bind(this, this._vScrollbar, this._hScrollbar, false));
+        Idea.Util.unobserve(this._vScrollbar, "slider", this.adjustViewboxToScrollbars.bind(this, this._vScrollbar, this._hScrollbar, false));        
+    },
+
+    mouseMove: function(e){
+        var vscrollbar = this._vScrollbar;
+        var hscrollbar = this._hScrollbar;
+        var event = Idea.Util.normalizeMouseEvent(e);
+
+        // calculate canvasCoordinates to window coordinates ratio and infer viewBox shift from that
+        var canvasRectangle = this.canvas._canvas.getBoundingClientRect(); // this is relative to window - the browser viewport
+        var canvasToUserXRatio = this.canvas.viewBox().width / canvasRectangle.width;
+        var canvasToUserYRatio = this.canvas.viewBox().height / canvasRectangle.height;
+
+        // inverse the signs of deltas - if user moves mouse up, the viewBox goes down
+        var deltaX = -canvasToUserXRatio * (event.clientX - this.previousMouseCoords.x);
+        var deltaY = -canvasToUserYRatio * (event.clientY - this.previousMouseCoords.y);
+
+        // calculate the new position of viewBox
+        var viewBox = this.canvas.viewBox();
+
+        if (viewBox.x + viewBox.width + deltaX > Idea.Conf.canvasMaxX) viewBox.x = Idea.Conf.canvasMaxX - viewBox.width;
+        else if (viewBox.x + deltaX < Idea.Conf.canvasMinX) viewBox.x = Idea.Conf.canvasMinX
+        else viewBox.x = parseInt(viewBox.x + deltaX)
+
+        if (viewBox.y + viewBox.height + deltaY > Idea.Conf.canvasMaxY) viewBox.y = Idea.Conf.canvasMaxY - viewBox.height;
+        else if (viewBox.y + deltaY < Idea.Conf.canvasMinY) viewBox.y = Idea.Conf.canvasMinY
+        else viewBox.y = parseInt(viewBox.y + deltaY)
+
+        this.canvas.viewBox(viewBox);
+
+        // shift sliders according to the viewBox location
+        var vscrollbarRailSize = vscrollbar.railMax() - vscrollbar.railMin();
+        var hscrollbarRailSize = hscrollbar.railMax() - hscrollbar.railMin();
+        var canvasXSize = Idea.Conf.canvasMaxX - Idea.Conf.canvasMinY;
+        var canvasYSize = Idea.Conf.canvasMaxY - Idea.Conf.canvasMinY;
+
+        hscrollbar.slider({min: parseInt(hscrollbar.railMin() + (viewBox.x - Idea.Conf.canvasMinX) / canvasXSize * hscrollbarRailSize), 
+                                 max: parseInt(hscrollbar.railMin() + (viewBox.x + viewBox.width - Idea.Conf.canvasMinX) / canvasXSize * hscrollbarRailSize)});
+        vscrollbar.slider({min: parseInt(vscrollbar.railMin() + (viewBox.y - Idea.Conf.canvasMinY) / canvasYSize * vscrollbarRailSize), 
+                                 max: parseInt(vscrollbar.railMin() + (viewBox.y + viewBox.height - Idea.Conf.canvasMinY) / canvasYSize * vscrollbarRailSize)});
+
+        // update this.previousMouseCoords with current mouse location
+        this.previousMouseCoords = {x: event.clientX, y: event.clientY};
+    },
+
+    mouseUp: function(e){
+        e.preventDefault();
+        e.stopPropagation();
+
+        // TODO check it's left mouse button
+        // TODO unblock the mousewheel
+        delete this.mouseDownCoords;
+
+        // remove event listeners
+        Idea.Util.removeEventListener(window, "mouseup", this.mouseUp, false, this, []);
+        Idea.Util.removeEventListener(this.canvas._canvas, "mousemove", this.mouseMove, false, this, []);
+
+        // observe scorllbars again
+        Idea.Util.observe(this._hScrollbar, "slider", this.adjustViewboxToScrollbars.bind(this, this._vScrollbar, this._hScrollbar, false));
+        Idea.Util.observe(this._vScrollbar, "slider", this.adjustViewboxToScrollbars.bind(this, this._vScrollbar, this._hScrollbar, false));        
+    },
 
     /*
      * This function handles wheel event on this.canvas and scrolls the viewport and scrollbars
@@ -366,7 +449,6 @@ Idea.prototype = {
 
         // write out new viewBox value
         this.canvas.viewBox(viewBox);
-
 
         Idea.Util.observe(this._hScrollbar, "slider", this.adjustViewboxToScrollbars.bind(this, this._vScrollbar, this._hScrollbar, false));
         Idea.Util.observe(this._vScrollbar, "slider", this.adjustViewboxToScrollbars.bind(this, this._vScrollbar, this._hScrollbar, false));

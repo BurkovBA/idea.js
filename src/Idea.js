@@ -376,10 +376,8 @@ Idea.prototype = {
         var topDelta = Math.abs(parseInt(event.deltaFactor * bottomFraction));
         var bottomDelta = Math.abs(parseInt(event.deltaFactor * topFraction));
 
-        debugger;
-
-        if (event.deltaY > 0) { // if this is zoom in
-            // if zoom in would take the whole space of canvas
+        if (event.deltaY < 0) { // if this is zoom out
+            // if zoom out would take the whole space of canvas
             if ((hscrollbar.slider().min - leftDelta < hscrollbar.railMin()) && (hscrollbar.slider().max + rightDelta > hscrollbar.railMax())) { // the other scrollbar should be proportional
                 // just enlarge the scrollbars to the full size of the rail and set the viewBox to full canvas
                 hscrollbar.slider({min: hscrollbar.railMin(), max: hscrollbar.railMax()});
@@ -411,8 +409,9 @@ Idea.prototype = {
                 vscrollbar.slider({min: vscrollbar.slider().min - leftDelta, max: vscrollbar.slider().max + rightDelta});                
             }
         }
-        else { // if this is zoom out
+        else { // if this is zoom in
             var sumOfDeltas;
+
             if ( (hscrollbar.slider().max - rightDelta) - (hscrollbar.slider().min - leftDelta) <  Idea.Conf.minimalSliderSize ){
                 // this new slider becomes too small size
                 sumOfDeltas = leftDelta + rightDelta;
@@ -420,16 +419,16 @@ Idea.prototype = {
                 rightDelta = parseInt(rightDelta / sumOfDeltas * Idea.Conf.minimalSliderSize);
                 // TODO: it might be necessary to resize the other slider to preserve canvas proportions
             }
-            hscrollbar.slider({min: hscrollbar.slider().min - leftDelta, max: hscrollbar.slider().max + rightDelta});            
+            hscrollbar.slider({min: hscrollbar.slider().min + leftDelta, max: hscrollbar.slider().max - rightDelta});
 
             if ( (vscrollbar.slider().max - bottomDelta) - (vscrollbar.slider().min - topDelta) <  Idea.Conf.minimalSliderSize ){
                 // this new slider becomes too small size
                 sumOfDeltas = topDelta + bottomDelta;
-                leftDelta = parseInt(leftDelta / sumOfDeltas * Idea.Conf.minimalSliderSize);
-                rightDelta = parseInt(rightDelta / sumOfDeltas * Idea.Conf.minimalSliderSize);
+                topDelta = parseInt(topDelta / sumOfDeltas * Idea.Conf.minimalSliderSize);
+                bottomDelta = parseInt(bottomDelta / sumOfDeltas * Idea.Conf.minimalSliderSize);
                 // TODO: it might be necessary to resize the other slider to preserve canvas proportions
             }
-            vscrollbar.slider({min: vscrollbar.slider().min - leftDelta, max: vscrollbar.slider().max + rightDelta});            
+            vscrollbar.slider({min: vscrollbar.slider().min + topDelta, max: vscrollbar.slider().max - bottomDelta});            
         }
 
         /*

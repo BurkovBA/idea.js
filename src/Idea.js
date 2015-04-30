@@ -86,13 +86,13 @@ Idea = function(){
         this.canvasAndScrollbars = document.createElement('div');
         this.canvasAndScrollbars.style.display = "inline-block";
         this.canvasAndScrollbars.style.border = "1px solid black";
-        this.canvasAndScrollbars.style.width = Idea.Conf.defaultViewportWidth+2*20;
-        this.canvasAndScrollbars.style.height = Idea.Conf.defaultViewportHeight+2*20;
+        this.canvasAndScrollbars.style.width = Idea.Conf.defaultViewportWidth + Idea.Conf.scrollbarOtherSide;
+        this.canvasAndScrollbars.style.height = Idea.Conf.defaultViewportHeight + Idea.Conf.scrollbarOtherSide;
         this.canvasAndScrollbars.id = "canvasAndScrollbars";
 
         this.canvasAndVScrollbar = document.createElement('div');
         this.canvasAndVScrollbar.style.display = "inline-block";
-        this.canvasAndVScrollbar.style.width = Idea.Conf.defaultViewportWidth+2*20;
+        this.canvasAndVScrollbar.style.width = Idea.Conf.defaultViewportWidth + Idea.Conf.scrollbarOtherSide;
         this.canvasAndVScrollbar.style.height = Idea.Conf.defaultViewportHeight;
         this.canvasAndVScrollbar.id = "canvasAndVScrollbar";
         this.canvasAndScrollbars.appendChild(this.canvasAndVScrollbar);
@@ -104,12 +104,12 @@ Idea = function(){
         var scrollbarWindowSize = Idea.Conf.defaultViewboxHeight;
         var scrollbarScrollSize = Idea.Conf.defaultViewboxHeight / Idea.Conf.scrollbarScrollsPerPage;
         // father, sliderCoord, scrollSize, x, y, width, height, vertical
-        this._vScrollbar = new this.Scrollbar(this.canvasAndVScrollbar, 0, scrollbarScrollSize, undefined, undefined, 40, Idea.Conf.defaultViewportHeight, true);
+        this._vScrollbar = new this.Scrollbar(this.canvasAndVScrollbar, 0, scrollbarScrollSize, undefined, undefined, Idea.Conf.scrollbarOtherSide, Idea.Conf.defaultViewportHeight, true);
 
         scrollbarWindowSize = Idea.Conf.defaultViewboxWidth;
         scrollbarScrollSize = Idea.Conf.defaultViewboxWidth / Idea.Conf.scrollbarScrollsPerPage;
         // father, sliderCoord, scrollSize, x, y, width, height, vertical
-        this._hScrollbar = new this.Scrollbar(this.canvasAndScrollbars, 0, scrollbarScrollSize, undefined, undefined, Idea.Conf.defaultViewportWidth, 40, false);
+        this._hScrollbar = new this.Scrollbar(this.canvasAndScrollbars, 0, scrollbarScrollSize, undefined, undefined, Idea.Conf.defaultViewportWidth, Idea.Conf.scrollbarOtherSide, false);
 
         Idea.Util.observe(this._vScrollbar, "slider", this.adjustViewboxToScrollbars.bind(this, this._vScrollbar, this._hScrollbar, true));
         Idea.Util.observe(this._hScrollbar, "slider", this.adjustViewboxToScrollbars.bind(this, this._vScrollbar, this._hScrollbar, false));

@@ -15,6 +15,7 @@
 
     	scrollbarScrollsPerPage: 20, // how many lines per page are there in vertical scrollbar or how many chars per line in horizontal scrollbar
         minimalSliderSize: 50, // the least amount of pixels a scrollbar's slider can take
+        scrollbarOtherSide: 30, // scrollbar has to sides: long and short; this is the length of the short side
 
         framerate: 25
     };

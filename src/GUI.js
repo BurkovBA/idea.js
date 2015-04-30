@@ -150,8 +150,8 @@
     	this.idea = idea;
         this._div = document.createElement('div');
         this._div.className = 'toolbar';
-        this._div.style.width = "" + (Idea.Conf.defaultViewportWidth + 40) +"px";
-        this._div.style.height = "" + (Idea.Conf.defaultViewportHeight + 40) +"px";
+        this._div.style.width = "" + (Idea.Conf.defaultViewportWidth + Idea.Conf.scrollbarOtherSide) +"px";
+        this._div.style.height = "" + (Idea.Conf.defaultViewportHeight + Idea.Conf.scrollbarOtherSide) +"px";
 
         this.tabBar = document.createElement('div');
         this._div.appendChild(this.tabBar);

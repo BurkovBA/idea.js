@@ -10,13 +10,13 @@ module.exports = function(grunt) {
                 src: [
                     'src/Idea.js',
                     'src/Conf.js',
-                    'src/Util.js',
-                    'src/Canvas.js',
                     'src/Slide.js',
-                    'src/GUI.js',
-                    'src/Widget.js',
+                    'src/util/**.js',
+                    'src/primitives/Object.js',
+                    'src/primitives/**.js',
+                    'src/ui/**.js',
                     'src/contrib/widgets/**.js',
-                    'src/contrib/primitives/**.js'
+
                 ],
                 dest: '<%= pkg.name %>.js'
             }
@@ -34,6 +34,8 @@ module.exports = function(grunt) {
                     alert: true,
                     setInterval: true,
                     clearInterval: true,
+                    setTimeout: true,
+                    clearTimeout: true,
                     console: true,
                     module: true,
                     browser: true,

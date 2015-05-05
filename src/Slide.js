@@ -1,7 +1,7 @@
 (function(){
 
 	var Slide = function(idea){
-        this.widgets = []; //list of widgets ordered from deepest to upmost
+        this.objects = []; // list of objects ordered from deepest to upmost
     };
 
     Slide.prototype = {

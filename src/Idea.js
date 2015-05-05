@@ -22,29 +22,29 @@
  *     you create your presentation elements and this is what your audience 
  *     wants to see in view mode.
  *   - The right-central part is a tabbed Tools panel. In edit mode it contains
- *     Layers bar, Widgets selection bar, Widget options panel, Transitions 
+ *     Layers bar, Objects selection bar, Object options panel, Transitions 
  *     selection bar, Transition options panel, Source code bar, Properties
  *     bar and Comments bar.
  *     In view mode it contains only Properties bar and Comments bar.
  *
- * Presentation elements are called Widgets. In edit mode you can add new 
- * widgets to the Canvas, choosing them from Widgets selection bar. You can 
- * customize widget, by clicking on it and using Widget options panel that 
+ * Presentation elements are called Objects. In edit mode you can add new 
+ * objects to the Canvas, choosing them from Objects selection bar. You can 
+ * customize Object, by clicking on it and using Object options panel that 
  * appears in the Tools panel. You can also directly set its properties in
  * javascript code in Source code bar.
  * 
- * Widgets may contain daughterly widgets.
+ * Objects may contain daughterly Objects.
  *
  * Layers bar
  *
- * Layers bar describes the order of Widgets on your Canvas. Layers bar 
+ * Layers bar describes the order of Objects on your Canvas. Layers bar 
  * contains Layers and Layer Groups. A Layer is an object, on which you put
- * low-level drawing primitives that comprise your Widgets. A Layer Group 
+ * low-level drawing primitives that comprise your Objects. A Layer Group 
  * (or just Group) is an ordered set of Layers and/or daughterly Layer Groups. 
- * Each Widget corresponds to a Layer Group. The most primitive Widgets consist
- * of a Layer Group, which contains a single Layer. The Widget primitives are
- * drawn on that Layer.  If the widget contains daughterly widgets, each 
- * daughterly Widget corresponds to its own Layer Group within the parent 
+ * Each Object corresponds to a Layer Group. The most primitive Objects consist
+ * of a Layer Group, which contains a single Layer. The Object primitives are
+ * drawn on that Layer.  If the Object contains daughterly Objects, each 
+ * daughterly Object corresponds to its own Layer Group within the parent 
  * Layer's Layer Group.
  *
  * Source code bar 
@@ -55,8 +55,8 @@
  * code bar is sanitized via white-list-based sanitizer.
  *
  * Idea.js makes use of getterSetters (possibly overloaded, i.e. in multiple forms)
- * to access and modify attributes of objects. E.g. you can say widget.opacity()
- * to obtain opacity value of your widget and say widget.opacity(0.5) to set
+ * to access and modify attributes of objects. E.g. you can say object.opacity()
+ * to obtain opacity value of your Object and say Object.opacity(0.5) to set
  * its opacity to 50%. So the same method "opacity" acts both as getter and setter.
  * 
  */
@@ -182,8 +182,8 @@ Idea = function(){
 };
 
 /*
- * Idea.Util contains convenience functions, objects and constants for Idea.js programmers,
- * writing both library core and extensions, widgets etc.
+ * Idea.Util contains convenience functions, objects and constants for programming
+ * Idea.js code.
  */
 
 Idea.Util = {};
@@ -205,7 +205,7 @@ Idea.Conf = {};
  *
  */
 
-Idea.ObjectsRegistry = {"Basic": []};
+Idea.ObjectsRegistry = {"Primitives": []};
 
 Idea.prototype = {
     mode: function(mode){
@@ -242,15 +242,15 @@ Idea.prototype = {
         this.insertSlide(this.length, slide);
     },
 
-    selection: function(widgets){
-        if (widgets === undefined) {
+    selection: function(objects){
+        if (objects === undefined) {
             return this._selection;
         }
         else {
-            Idea.Util.callObservers(this, "selection", widgets);
+            Idea.Util.callObservers(this, "selection", objects);
             // just in case: don't replace the old array object with a new one - modify it
             this._selection.splice(0, this._selection.length);
-            this._selection.push.apply(this._selection, widgets);
+            this._selection.push.apply(this._selection, objects);
         }
     },
 

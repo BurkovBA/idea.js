@@ -45,7 +45,7 @@ Idea.Validators = {
     },
 
     transformValidator: function(arg, argName){
-        var transforms = Idea.Util.parseTransform(arg);
+        var transforms = Idea.Validators.parseTransform(arg);
     },
 
     /*
@@ -135,9 +135,9 @@ Idea.Validators = {
                         };                            
                     }
                     else{
-                        var result = Idea.Util.matrixMultiplication({a:1, b:0, c:0, d:1, e:parseFloat(match[3]), f:parseFloat(match[4])}, 
+                        var result = Idea.Validators.matrixMultiplication({a:1, b:0, c:0, d:1, e:parseFloat(match[3]), f:parseFloat(match[4])}, 
                             {a:Math.cos(parseFloat(match[1])), b:Math.sin(parseFloat(match[1])), c:-Math.sin(parseFloat(match[1])), d:Math.cos(parseFloat(match[1])), e:0, f:0});
-                        result = Idea.Util.matrixMultiplication(result, {a:1, b:0, c:0, d:1, e:-parseFloat(match[3]), f:-parseFloat(match[4])});
+                        result = Idea.Validators.matrixMultiplication(result, {a:1, b:0, c:0, d:1, e:-parseFloat(match[3]), f:-parseFloat(match[4])});
                         transform = {
                             type: 'rotate',
                             angle: parseFloat(match[1]),
@@ -186,7 +186,7 @@ Idea.Validators = {
         });
         // note that initial matrix should be reversed!
         transforms.reverse();
-        transforms.forEach(function(el){ matrix = Idea.Util.matrixMultiplication(matrix, el); });
+        transforms.forEach(function(el){ matrix = Idea.Validators.matrixMultiplication(matrix, el); });
         transforms.reverse();
         return [matrix, transforms];
     },

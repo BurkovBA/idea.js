@@ -68,117 +68,62 @@
  */
 
 Idea = function(){
-        // create a div container for our canvas
-        this._div = document.createElement('div');
-        this._div.style.border = "1px solid rgb(200,200,200)";
-        this._div.style.padding = "3px";
-        this._div.style.display = "inline-block";
+    // create a div container for our canvas
+    this._div = document.createElement('div');
+    this._div.style.border = "1px solid rgb(200,200,200)";
+    this._div.style.padding = "3px";
+    this._div.style.display = "inline-block";
 
-        this.layers = [];
-        this._selection = [];
+    this.layers = [];
+    this._selection = [];
 
-        this.slides = [new this.Slide()]; // slides in correct order
-        this._slide = this.slides[0]; // currently active slide
-        this._mode = "view"; // "view" or "edit" mode
+    this._mode = "view"; // "view" or "edit" mode
 
-        this.gui = {};
+    this.gui = {};
 
-        this.canvasAndScrollbars = document.createElement('div');
-        this.canvasAndScrollbars.style.display = "inline-block";
-        this.canvasAndScrollbars.style.border = "1px solid black";
-        this.canvasAndScrollbars.style.width = Idea.Conf.defaultViewportWidth + Idea.Conf.scrollbarOtherSide;
-        this.canvasAndScrollbars.style.height = Idea.Conf.defaultViewportHeight + Idea.Conf.scrollbarOtherSide;
-        this.canvasAndScrollbars.id = "canvasAndScrollbars";
+    this.canvasAndScrollbars = document.createElement('div');
+    this.canvasAndScrollbars.style.display = "inline-block";
+    this.canvasAndScrollbars.style.border = "1px solid black";
+    this.canvasAndScrollbars.style.width = Idea.Conf.defaultViewportWidth + Idea.Conf.scrollbarOtherSide;
+    this.canvasAndScrollbars.style.height = Idea.Conf.defaultViewportHeight + Idea.Conf.scrollbarOtherSide;
+    this.canvasAndScrollbars.id = "canvasAndScrollbars";
 
-        this.canvasAndVScrollbar = document.createElement('div');
-        this.canvasAndVScrollbar.style.display = "inline-block";
-        this.canvasAndVScrollbar.style.width = Idea.Conf.defaultViewportWidth + Idea.Conf.scrollbarOtherSide;
-        this.canvasAndVScrollbar.style.height = Idea.Conf.defaultViewportHeight;
-        this.canvasAndVScrollbar.id = "canvasAndVScrollbar";
-        this.canvasAndScrollbars.appendChild(this.canvasAndVScrollbar);
+    this.canvasAndVScrollbar = document.createElement('div');
+    this.canvasAndVScrollbar.style.display = "inline-block";
+    this.canvasAndVScrollbar.style.width = Idea.Conf.defaultViewportWidth + Idea.Conf.scrollbarOtherSide;
+    this.canvasAndVScrollbar.style.height = Idea.Conf.defaultViewportHeight;
+    this.canvasAndVScrollbar.id = "canvasAndVScrollbar";
+    this.canvasAndScrollbars.appendChild(this.canvasAndVScrollbar);
 
-        this.canvas = new this.Canvas(this);
-        this.canvasAndVScrollbar.appendChild(this.canvas._canvas);
-        Idea.Util.addEventListener(this.canvas._canvas, "wheel", this.wheel, false, this, []);
+    this.canvas = new this.Canvas(this);
+    this.canvasAndVScrollbar.appendChild(this.canvas._canvas);
+    Idea.Util.addEventListener(this.canvas._canvas, "wheel", this.wheel, false, this, []);
 
-        var scrollbarWindowSize = Idea.Conf.defaultViewboxHeight;
-        var scrollbarScrollSize = Idea.Conf.defaultViewboxHeight / Idea.Conf.scrollbarScrollsPerPage;
-        // father, sliderCoord, scrollSize, x, y, width, height, vertical
-        this._vScrollbar = new this.Scrollbar(this.canvasAndVScrollbar, 0, scrollbarScrollSize, undefined, undefined, Idea.Conf.scrollbarOtherSide, Idea.Conf.defaultViewportHeight, true);
+    // create vertical scrollbar, parameters: father, sliderCoord, scrollSize, x, y, width, height, vertical
+    var scrollbarWindowSize = Idea.Conf.defaultViewboxHeight;
+    var scrollbarScrollSize = Idea.Conf.defaultViewboxHeight / Idea.Conf.scrollbarScrollsPerPage;
+    this._vScrollbar = new this.Scrollbar(this.canvasAndVScrollbar, 0, scrollbarScrollSize, undefined, undefined, Idea.Conf.scrollbarOtherSide, Idea.Conf.defaultViewportHeight, true);
 
-        scrollbarWindowSize = Idea.Conf.defaultViewboxWidth;
-        scrollbarScrollSize = Idea.Conf.defaultViewboxWidth / Idea.Conf.scrollbarScrollsPerPage;
-        // father, sliderCoord, scrollSize, x, y, width, height, vertical
-        this._hScrollbar = new this.Scrollbar(this.canvasAndScrollbars, 0, scrollbarScrollSize, undefined, undefined, Idea.Conf.defaultViewportWidth, Idea.Conf.scrollbarOtherSide, false);
+    // create vertical scrollbar, parameters: father, sliderCoord, scrollSize, x, y, width, height, vertical
+    scrollbarWindowSize = Idea.Conf.defaultViewboxWidth;
+    scrollbarScrollSize = Idea.Conf.defaultViewboxWidth / Idea.Conf.scrollbarScrollsPerPage;
+    this._hScrollbar = new this.Scrollbar(this.canvasAndScrollbars, 0, scrollbarScrollSize, undefined, undefined, Idea.Conf.defaultViewportWidth, Idea.Conf.scrollbarOtherSide, false);
 
-        Idea.Util.observe(this._vScrollbar, "slider", this.adjustViewboxToScrollbars.bind(this, this._vScrollbar, this._hScrollbar, true));
-        Idea.Util.observe(this._hScrollbar, "slider", this.adjustViewboxToScrollbars.bind(this, this._vScrollbar, this._hScrollbar, false));
+    this._div.appendChild(this.canvasAndScrollbars);
 
-        this._div.appendChild(this.canvasAndScrollbars);
+    this.gui.tools = new this.Toolbar();
+    this._div.appendChild(this.gui.tools._div);
 
-        this.gui.tools = new this.Toolbar();
-        this._div.appendChild(this.gui.tools._div);
+    // observe slider movement
+    Idea.Util.observe(this._vScrollbar, "slider", this.adjustViewboxToScrollbars.bind(this, this._vScrollbar, this._hScrollbar, true));
+    Idea.Util.observe(this._hScrollbar, "slider", this.adjustViewboxToScrollbars.bind(this, this._vScrollbar, this._hScrollbar, false));
 
-        // observe selection, respond to Esc by clearing selection
-        Idea.Util.addEventListener(window, "keydown", this.keyDown, false, this, []);
-        Idea.Util.addEventListener(window, "keypress", this.keyDown, false, this, []);
+    // observe selection, respond to Esc by clearing selection
+    Idea.Util.addEventListener(window, "keydown", this.keyDown, false, this, []);
+    Idea.Util.addEventListener(window, "keypress", this.keyDown, false, this, []);
 
-        // add event handler for dragging the canvas
-        Idea.Util.addEventListener(this.canvas._canvas, "mousedown", this.mouseDown, false, this, []);
-
-        // create resize grip
-        this._grip = document.createElement('div');
-        this._grip.style.width = 10;
-        this._grip.style.height = 10;
-        this._grip.style.display = "inline-block";
-        this._grip.style.background = "#AAAAAA";
-        this._grip.style.float = "right";
-        this._div.appendChild(this._grip);
-
-        this._grip.onmousedown = function(event){
-            event = Idea.Util.normalizeMouseEvent(event);
-            if (event.which == 1) {
-                this._grip_pressed = true;
-                this._grip_x = event.clientX;
-                this._grip_y = event.clientY;
-                // add event listeners to <html> (i.e. document.documentElement)
-                // to respond to mousemove and mouseup if they're outside _grip.
-                // idea taken from here:
-                // http://stackoverflow.com/questions/8960193/how-to-make-html-element-resizable-using-pure-javascript
-                var Up = function(event){
-                    event = Idea.Util.normalizeMouseEvent(event)
-                    if (event.which == 1) {
-                        this._grip_pressed = false;
-                        document.documentElement.removeEventListener('mousemove', Move, false);
-                        document.documentElement.removeEventListener('mouseup', Up, false);
-                    }
-                }.bind(this);
-                
-                var Move = function(event) {
-                    event = Idea.Util.normalizeMouseEvent(event)
-                    if (this._grip_pressed === true){
-                        this.width(parseInt(this.width()) + event.clientX - this._grip_x);
-                        this.height(parseInt(this.height()) + event.clientY - this._grip_y);
-                        this._grip_x = event.clientX;
-                        this._grip_y = event.clientY;
-                    }
-                }.bind(this);
-
-                document.documentElement.addEventListener('mouseup', Up, false);
-                document.documentElement.addEventListener('mousemove', Move, false);
-            }
-        }.bind(this);
-        this._grip.onmouseover = function(event){
-            event = Idea.Util.normalizeMouseEvent(event);
-            this.style.cursor = "nw-resize";
-        };
-
-        /*
-        //create clear element to clear floats
-        this._clear = document.createElement('div');
-        this._grip.style.clear = "both";
-        this._div.appendChild(this._clear);        
-        */
+    // add event handler for dragging the canvas
+    Idea.Util.addEventListener(this.canvas._canvas, "mousedown", this.mouseDown, false, this, []);
 };
 
 /*
@@ -214,32 +159,6 @@ Idea.prototype = {
             if (mode == "view" || mode == "edit" || mode == "creation") {this._mode = mode;}
             else {throw new Error("Wrong mode value: '" + mode + "', should be in ['view', 'edit', 'creation']!");}
         }
-    },
-
-    slide: function(slide){
-        if (slide === undefined) {return this._slide;}
-        else {
-            if (this.slides.contains(slide)) {this._slide = slide;}
-            else {throw new Error("Slide not in slides!");}
-        }
-    },
-
-    insertSlide: function(index, slide){
-        // create and insert slide preview to the slidebar
-        if (index > this.slides.length){
-            // raise Exception
-        }
-        else {
-            var previous_slide_preview = this.gui.slidebar.getChildNodes()[index];
-            var div = document.createElement('div');
-            // TODO create preview
-            this.gui.slidebar.insertBefore(div, previous_slide_preview)
-        }
-        this.splice(index, 0, slide);
-    },
-
-    appendSlide: function(slide){
-        this.insertSlide(this.length, slide);
     },
 
     selection: function(objects){

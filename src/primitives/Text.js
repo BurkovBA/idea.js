@@ -1,9 +1,9 @@
 (function(){
-    var xGetterSetter = Idea.Util.getterSetter("x", Idea.Util.intValidator);
-    var yGetterSetter = Idea.Util.getterSetter("y", Idea.Util.intValidator);
-    var contentGetterSetter = Idea.Util.getterSetter("content", Idea.Util.stringValidator);
-    var strokeGetterSetter = Idea.Util.getterSetter("stroke", Idea.Util.colorValidator);
-    var fillGetterSetter = Idea.Util.getterSetter("fill", Idea.Util.colorValidator);
+    var xGetterSetter = Idea.Util.getterSetter("x", Idea.Validators.intValidator);
+    var yGetterSetter = Idea.Util.getterSetter("y", Idea.Validators.intValidator);
+    var contentGetterSetter = Idea.Util.getterSetter("content", Idea.Validators.stringValidator);
+    var strokeGetterSetter = Idea.Util.getterSetter("stroke", Idea.Validators.colorValidator);
+    var fillGetterSetter = Idea.Util.getterSetter("fill", Idea.Validators.colorValidator);
 
 	var Text = function(owner, father, x, y, content, stroke, fill, fontSize, fontWeight, fontStyle){
         Idea.Object.call(this);
@@ -48,7 +48,7 @@
         // create text and mousemove listener
         var event = Idea.Util.normalizeMouseEvent(e);
         var canvasCoords = Idea.Util.windowCoordsToCanvasCoords(event.clientX, event.clientY, this.canvas._canvas);
-        console.log("canvasCoords = " + canvasCoords);
+        console.log("canvasCoords = " + JSON.stringify(canvasCoords));
 
         // draw the base on canvas
         this._new = new Text(this, this.canvas._canvas, canvasCoords.x, canvasCoords.y, "", '#000000', '#000000');

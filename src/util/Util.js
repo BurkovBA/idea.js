@@ -387,7 +387,6 @@
          */
 
         extend: function(Child, Parent){
-            debugger;
             var parent_prototype;
             if ("fn" in Parent){ parent_prototype = Parent.fn } // WARNING
             else { parent_prototype = Parent.prototype; }

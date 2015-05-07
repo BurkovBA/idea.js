@@ -60,13 +60,13 @@
                                                                                   height: "8",
                                                                                   patternUnits: "userSpaceOnUse",
                                                                                   });
-        Idea.Util.createSVGElement(this.smallGridPattern, 'path', {d:"M 8 0 L 0 0 0 8", fill:"none", stroke:"#c0c0c0", "stroke-width":"0.5"});
+        Idea.Util.createSVGElement(this.smallGridPattern, 'path', {d:"M 8 0 L 0 0 0 8", fill:"none", stroke:"#e0e0e0", "stroke-width":"0.5"});
         this.gridPattern = Idea.Util.createSVGElement(this.defs, 'pattern', {id:"gridPattern",
                                                                        width: "80",
                                                                        height: "80",
                                                                        patternUnits: "userSpaceOnUse"});
         Idea.Util.createSVGElement(this.gridPattern, 'rect', {width:"80", height:"80", fill:"url(#smallGridPattern)"});
-        Idea.Util.createSVGElement(this.gridPattern, 'path', {d:"M 80 0 L 0 0 0 80", fill:"none", stroke: "#c0c0c0", "stroke-width": "1"});
+        Idea.Util.createSVGElement(this.gridPattern, 'path', {d:"M 80 0 L 0 0 0 80", fill:"none", stroke: "#e0e0e0", "stroke-width": "1"});
 
         //this.grid = Idea.Util.createSVGElement(this._canvas, 'rect', {width:"100%", height: "100%", fill:"url(#gridPattern)"});
         this.grid = Idea.Util.createSVGElement(this._canvas, 'rect', {x:Idea.Conf.canvasMinX, y:Idea.Conf.canvasMinY, width:(Idea.Conf.canvasMaxX - Idea.Conf.canvasMinX), height:(Idea.Conf.canvasMaxY - Idea.Conf.canvasMinY), fill:"url(#gridPattern)"});
